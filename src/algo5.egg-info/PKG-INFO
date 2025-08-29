@@ -1,0 +1,11 @@
+Metadata-Version: 2.4
+Name: algo5
+Version: 0.1.0
+Requires-Python: >=3.9
+Requires-Dist: pandas>=2.0
+Requires-Dist: pyarrow>=12
+Provides-Extra: test
+Requires-Dist: pytest>=7.4; extra == "test"
+Requires-Dist: pytest-cov>=4.1; extra == "test"
+Provides-Extra: ui
+Requires-Dist: streamlit>=1.28; extra == "ui"

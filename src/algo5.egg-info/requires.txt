@@ -1,0 +1,9 @@
+pandas>=2.0
+pyarrow>=12
+
+[test]
+pytest>=7.4
+pytest-cov>=4.1
+
+[ui]
+streamlit>=1.28

@@ -1,0 +1,12 @@
+﻿.venv/
+__pycache__/
+.cache/
+*.parquet
+*.pkl
+*.db
+results/
+logs/
+.ui_state/
+.DS_Store
+.idea/
+.vscode/
