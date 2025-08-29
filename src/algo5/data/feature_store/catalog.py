@@ -1,24 +1,20 @@
+
 from __future__ import annotations
-from dataclasses import dataclass, asdict
-from typing import Dict, Any
 from pathlib import Path
-import json
+from .cache import get_cache_root, ensure_dir
 
-CATALOG = Path(".cache/features/catalog.json")
-CATALOG.parent.mkdir(parents=True, exist_ok=True)
-if not CATALOG.exists():
-    CATALOG.write_text("{}")
+def list_namespaces() -> list[str]:
+    root = get_cache_root()
+    if not root.exists():
+        return []
+    return sorted([p.name for p in root.iterdir() if p.is_dir()])
 
-@dataclass
-class Entry:
-    dataset_id: str
-    description: str
-    rows: int
-
-def register(entry: Entry) -> None:
-    db = json.loads(CATALOG.read_text())
-    db[entry.dataset_id] = asdict(entry)
-    CATALOG.write_text(json.dumps(db, indent=2, sort_keys=True))
-
-def list_entries() -> Dict[str, Any]:
-    return json.loads(CATALOG.read_text())
+def list_items(namespace: str) -> list[str]:
+    d = get_cache_root() / namespace
+    if not d.exists():
+        return []
+    out: set[str] = set()
+    for p in d.iterdir():
+        if p.suffix in {".json", ".parquet"}:
+            out.add(p.stem)
+    return sorted(out)

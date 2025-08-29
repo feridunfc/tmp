@@ -1,9 +1,16 @@
-from algo5.data.quality.monitor import DataQualityMonitor, SchemaCheck
+from __future__ import annotations
+
+from algo5.data.quality.monitor import DataQualityMonitor
+
 
 def test_schema_check_ok(demo_df):
-    rep = DataQualityMonitor([SchemaCheck()]).run(demo_df)
-    assert rep["SchemaCheck"]["ok"]
+    rep = DataQualityMonitor().run(demo_df)
+    assert rep["ok"]
+    assert "checksum" in rep
+
 
 def test_schema_check_missing(demo_df):
-    rep = DataQualityMonitor([SchemaCheck()]).run(demo_df.drop(columns=["Volume"]))
-    assert rep["SchemaCheck"]["ok"] is False
+    bad = demo_df.drop(columns=["Volume"])
+    rep = DataQualityMonitor().run(bad)
+    assert rep["ok"] is False
+    assert "Volume" in rep["SchemaCheck"]["missing"]

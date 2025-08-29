@@ -1,39 +1,39 @@
+
 from __future__ import annotations
 from pathlib import Path
-import os
+from typing import Tuple
 import pandas as pd
+from .cache import get_cache_root, ensure_dir
 
 class FeatureStore:
-    def __init__(self, root: str | Path | None = None):
-        self.root = Path(root or os.getenv("ALGO5_FEATURE_ROOT", ".cache/features")).resolve()
+    def __init__(self, root: Path | None = None) -> None:
+        self.root = Path(root) if root is not None else get_cache_root()
+        ensure_dir(self.root)
 
-    def _path_for(self, key: str, *, ext: str = ".parquet") -> Path:
-        rel = Path(key + ext)
-        return (self.root / rel).resolve()
+    def _path_for(self, key: str | Tuple[str, str]) -> Path:
+        if isinstance(key, tuple):
+            namespace, name = key
+        else:
+            # "ns/name" or just "name"
+            parts = key.split("/", 1)
+            if len(parts) == 2:
+                namespace, name = parts
+            else:
+                namespace, name = "default", parts[0]
+        return self.root / namespace / f"{name}.parquet"
 
-    def save(self, key: str, df: pd.DataFrame, *, overwrite: bool = True):
-        # try parquet first, else pickle fallback
-        path = self._path_for(key, ext=".parquet")
-        path.parent.mkdir(parents=True, exist_ok=True)
+    def save(self, key: str | Tuple[str, str], df: pd.DataFrame, *, overwrite: bool = False) -> Path:
+        path = self._path_for(key)
+        ensure_dir(path.parent)
         if path.exists() and not overwrite:
             raise FileExistsError(f"Feature exists: {path}")
-        try:
-            df.to_parquet(path)
-            return path
-        except Exception:
-            # fallback
-            pkl = self._path_for(key, ext=".pkl")
-            df.to_pickle(pkl)
-            return pkl
+        df.to_parquet(path)
+        return path
 
+    # compat aliases for tests
     write = save
     put = save
 
-    def read(self, key: str) -> pd.DataFrame:
-        pq = self._path_for(key, ext=".parquet")
-        if pq.exists():
-            return pd.read_parquet(pq)
-        pkl = self._path_for(key, ext=".pkl")
-        if pkl.exists():
-            return pd.read_pickle(pkl)
-        raise FileNotFoundError(f"No feature found for key '{key}' under {self.root}")
+    def load(self, key: str | Tuple[str, str]) -> pd.DataFrame:
+        path = self._path_for(key)
+        return pd.read_parquet(path)

@@ -1,32 +1,30 @@
 from __future__ import annotations
+
 import hashlib
-import numpy as np
-import pandas as pd
 from dataclasses import dataclass
+from typing import Dict
+
+import pandas as pd
+
 
 def df_checksum(df: pd.DataFrame) -> str:
-    # stable checksum: values + index
-    vals = pd.util.hash_pandas_object(df, index=True).values
-    h = hashlib.md5(vals).hexdigest()
-    return h
+    """Deterministic checksum including index and columns order."""
+    # Use pandas hashing to be more stable across platforms
+    vals = pd.util.hash_pandas_object(df, index=True).values.tobytes()
+    return hashlib.md5(vals).hexdigest()
+
 
 @dataclass
 class Reproducibility:
     global_seed: int = 42
-    def get_strategy_seed(self, strategy_name: str) -> int:
-        # deterministic per-strategy seed
-        return (abs(hash(strategy_name)) % 100_000) + self.global_seed
+    strategy_seeds: Dict[str, int] | None = None
 
-    def seed_all(self, strategy_name: str | None = None):
-        import random
-        if strategy_name:
-            seed = self.get_strategy_seed(strategy_name)
-        else:
-            seed = self.global_seed
-        random.seed(seed)
-        try:
-            import numpy as np
-            np.random.seed(seed)
-        except Exception:
-            pass
-        return seed
+    def __post_init__(self) -> None:
+        if self.strategy_seeds is None:
+            self.strategy_seeds = {}
+
+    def get_strategy_seed(self, strategy_name: str) -> int:
+        if strategy_name not in self.strategy_seeds:
+            # stable per-name seed
+            self.strategy_seeds[strategy_name] = (hash(strategy_name) % 100_000) + int(self.global_seed)
+        return self.strategy_seeds[strategy_name]

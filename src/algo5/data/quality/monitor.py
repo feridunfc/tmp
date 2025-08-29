@@ -1,30 +1,33 @@
 from __future__ import annotations
-import pandas as pd
+
 from dataclasses import dataclass
-from typing import Dict, Any, Iterable
-from ..schemas import OhlcvSchema
+from typing import Any, Dict
+
+import pandas as pd
+
+from ..integrity import df_checksum
+
 
 @dataclass
 class SchemaCheck:
-    required: tuple[str, ...] = OhlcvSchema().required
+    required: tuple = ("Open", "High", "Low", "Close", "Volume")
+
     def run(self, df: pd.DataFrame) -> Dict[str, Any]:
         missing = sorted(set(self.required) - set(df.columns))
         return {"ok": not missing, "missing": missing}
 
-@dataclass
-class NaNCheck:
-    def run(self, df: pd.DataFrame) -> Dict[str, Any]:
-        nans = df.isna().sum().to_dict()
-        total = int(df.isna().sum().sum())
-        return {"ok": total == 0, "by_column": nans, "total": total}
 
 class DataQualityMonitor:
-    def __init__(self, checks: Iterable[object] | None = None):
-        self.checks = list(checks or [SchemaCheck(), NaNCheck()])
+    def __init__(self, checks=(SchemaCheck(),)) -> None:
+        self.checks = checks
 
     def run(self, df: pd.DataFrame) -> Dict[str, Any]:
         report: Dict[str, Any] = {}
+        ok = True
         for chk in self.checks:
-            report[chk.__class__.__name__] = chk.run(df)
-        report["ok"] = all(v.get("ok", True) for v in report.values())
+            res = chk.run(df)
+            report[chk.__class__.__name__] = res
+            ok = ok and bool(res.get("ok", True))
+        report["ok"] = ok
+        report["checksum"] = df_checksum(df)
         return report

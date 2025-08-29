@@ -1,4 +1,5 @@
 README.md
+README.txt
 pyproject.toml
 src/__init__.py
 src/algo5/__init__.py

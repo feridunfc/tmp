@@ -1,15 +1,20 @@
 from __future__ import annotations
-import numpy as np
-import pandas as pd
 
-def demo_ohlcv(*, periods: int = 120, start: str = "2024-01-01", freq: str = "D") -> pd.DataFrame:
-    idx = pd.date_range(start, periods=periods, freq=freq)
-    base = np.arange(periods, dtype=float)
-    df = pd.DataFrame({
-        "Open": 100 + base,
-        "High": 101 + base,
-        "Low":  99 + base,
-        "Close":100 + base,
-        "Volume": 1000 + np.arange(periods, dtype=int),
-    }, index=idx)
+import pandas as pd
+import numpy as np
+
+
+def demo_ohlcv(periods: int = 120) -> pd.DataFrame:
+    idx = pd.date_range("2024-01-01", periods=periods, freq="D")
+    base = 100.0 + np.arange(periods, dtype=float)
+    df = pd.DataFrame(
+        {
+            "Open": base,
+            "High": base + 1.0,
+            "Low": base - 1.0,
+            "Close": base,
+            "Volume": 1000 + np.arange(periods, dtype=int),
+        },
+        index=idx,
+    )
     return df
