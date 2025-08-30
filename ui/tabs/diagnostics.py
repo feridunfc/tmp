@@ -1,4 +1,4 @@
-﻿import streamlit as st
+import streamlit as st
 from algo5.data.loader import demo_ohlcv
 from algo5.metrics.core import sharpe, max_drawdown
 from algo5.metrics.trading import equity_from_returns
@@ -12,4 +12,4 @@ def run():
     c1.metric("Final Equity", f"{eq.iloc[-1]:,.2f}")
     c2.metric("Sharpe (ann.)", f"{sharpe(rets):.2f}")
     c3.metric("Max Drawdown", f"{max_drawdown(eq)*100:.2f}%")
-    st.line_chart(eq, use_container_width=True)
+    st.line_chart(eq)

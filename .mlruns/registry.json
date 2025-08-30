@@ -1,0 +1,25 @@
+{
+  "toy": [
+    {
+      "name": "toy",
+      "version": "1",
+      "path": "models/toy.pkl",
+      "checksum": "deadbeef",
+      "created_ts": 1756550301.3881795
+    },
+    {
+      "name": "toy",
+      "version": "1",
+      "path": "models/toy.pkl",
+      "checksum": "deadbeef",
+      "created_ts": 1756550541.0337133
+    },
+    {
+      "name": "toy",
+      "version": "1",
+      "path": "models/toy.pkl",
+      "checksum": "deadbeef",
+      "created_ts": 1756550615.927594
+    }
+  ]
+}

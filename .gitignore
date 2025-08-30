@@ -1,12 +1,14 @@
-﻿.venv/
+﻿# Python
 __pycache__/
-.cache/
-*.parquet
-*.pkl
-*.db
-results/
-logs/
-.ui_state/
-.DS_Store
+*.py[cod]
+*.egg-info/
+.venv/
+
+# IDE
 .idea/
 .vscode/
+
+# Data/Cache
+.cache/
+.mlops/
+reports/
