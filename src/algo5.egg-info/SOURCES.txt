@@ -19,5 +19,15 @@ src/algo5/data/feature_store/catalog.py
 src/algo5/data/feature_store/store.py
 src/algo5/data/quality/__init__.py
 src/algo5/data/quality/monitor.py
+src/algo5/engine/execution/matcher.py
+src/algo5/engine/execution/models.py
+src/algo5/engine/execution/gateways/paper.py
+src/algo5/engine/risk/__init__.py
+src/algo5/engine/risk/chain.py
+src/algo5/engine/risk/context.py
+src/algo5/engine/risk/rules.py
+src/algo5/engine/risk/sizer.py
 src/algo5/features/__init__.py
 src/algo5/features/ta.py
+src/algo5/metrics/core.py
+src/algo5/metrics/trading.py
