@@ -1,0 +1,54 @@
+﻿*** a/src/algo5/mlops/drift.py
+--- b/src/algo5/mlops/drift.py
+@@
+ from __future__ import annotations
+ import numpy as np
+ import pandas as pd
+ 
+-# ... mevcut yardımcılarınız/ithalatlarınız
++EPS = 1e-12  # PSI için sıfıra yapışmayı önleyen taban
+ 
+ def _psi_from_counts(p: np.ndarray, q: np.ndarray) -> float:
+     """Population Stability Index: sum((p-q)*ln(p/q))  (p,q olasılık vektörleri)."""
+     p = np.asarray(p, float)
+     q = np.asarray(q, float)
+     p = np.clip(p, 1e-12, 1.0)
+     q = np.clip(q, 1e-12, 1.0)
+     p /= p.sum()
+     q /= q.sum()
+     return float(np.sum((p - q) * np.log(p / q)))
+ 
+ def features_psi(ref: pd.DataFrame, cur: pd.DataFrame, *, bins: int = 10) -> pd.Series:
+     """
+     Kolon bazında PSI hesaplar. Sayısallar için referans-kantillerine göre binleme yapılır,
+     kategorikler için değer frekansları kullanılır.
+     """
+     out = {}
+     common_cols = [c for c in ref.columns if c in cur.columns]
+     for col in common_cols:
+         r = ref[col].dropna()
+         c = cur[col].dropna()
+         if r.empty or c.empty:
+             continue
+         if pd.api.types.is_numeric_dtype(r):
+             # referans kantilleri ile bin sınırları
+             qs = np.linspace(0, 1, min(bins, max(2, r.nunique())) + 1)
+             edges = np.unique(np.quantile(r, qs))
+             if edges.size < 2:
+                 out[col] = EPS
+                 continue
+             r_counts, _ = np.histogram(r, bins=edges)
+             c_counts, _ = np.histogram(c, bins=edges)
+             psi = _psi_from_counts(r_counts, c_counts)
+         else:
+             # kategorik: değer frekansları (referans evrenine hizalı)
+             cats = pd.Index(r.astype(str).unique())
+             r_counts = r.astype(str).value_counts().reindex(cats, fill_value=0).values
+             c_counts = c.astype(str).value_counts().reindex(cats, fill_value=0).values
+             psi = _psi_from_counts(r_counts, c_counts)
+-        out[col] = psi
++        # Küçük örneklerde tam 0.0 çıkmasını engelle: pozitif taban uygula
++        if psi <= 0.0:
++            psi = max(psi, EPS)
++        out[col] = psi
+     return pd.Series(out).sort_index()
