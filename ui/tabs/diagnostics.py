@@ -12,4 +12,4 @@ def run():
     c1.metric("Final Equity", f"{eq.iloc[-1]:,.2f}")
     c2.metric("Sharpe (ann.)", f"{sharpe(rets):.2f}")
     c3.metric("Max Drawdown", f"{max_drawdown(eq)*100:.2f}%")
-    st.line_chart(eq, width="stretch")
+    st.line_chart(eq, use_container_width=True)

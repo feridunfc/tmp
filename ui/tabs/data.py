@@ -1,33 +1,39 @@
-
-from __future__ import annotations
+import os
 import streamlit as st
-import pandas as pd
-
 from algo5.data.loader import demo_ohlcv
 from algo5.data.quality.monitor import DataQualityMonitor
 from algo5.data.feature_store.store import FeatureStore
-from algo5.data.feature_store.cache import get_cache_root, ensure_dir
+from algo5.data.feature_store.cache import set_cache_root
 
-def run() -> None:
-    st.subheader("Data Quality & Cache")
+def run():
+    st.subheader("Data Quality & Feature Store")
 
-    if "data" not in st.session_state:
-        st.session_state["data"] = demo_ohlcv(periods=120)
-    df: pd.DataFrame = st.session_state["data"]
+    # Demo DF veya session'dan
+    df = st.session_state.get("data")
+    if df is None:
+        df = demo_ohlcv(periods=120)
+        st.info("Demo dataframe kullanılıyor. (st.session_state['data'] bulunamadı)")
 
-    st.dataframe(df.head(15), use_container_width=True)
-    col1, col2 = st.columns(2)
+    # Cache kökü (opsiyonel)
+    cache_root = os.getenv("ALGO5_CACHE_ROOT")
+    if cache_root:
+        set_cache_root(cache_root)
 
-    with col1:
-        if st.button("Check Quality", use_container_width=True):
-            rep = DataQualityMonitor().run(df)
-            st.success("Quality OK" if rep.get("ok") else "Quality issues")
-            st.json(rep)
+    # --- Buttons (unique keys + new width API)
+    cols = st.columns(2)
+    with cols[0]:
+        do_check = st.button("Check Quality", key="btn_check_quality")
+    with cols[1]:
+        do_build = st.button("Build Cache", key="btn_build_cache")    # --- Actions
+    if do_check:
+        rep = DataQualityMonitor().run(df)
+        st.write("**Quality Report**")
+        st.json(rep, expanded=False)
 
-    with col2:
-        if st.button("Build Cache", use_container_width=True):
-            # make sure root/ns exists (Windows-safe)
-            ensure_dir(get_cache_root() / "raw")
-            store = FeatureStore()
-            path = store.save(("raw", "demo_ohlcv"), df, overwrite=True)
-            st.success(f"Cached: {path}")
+    if do_build:
+        store = FeatureStore()  # default namespace
+        path = store.save(("raw", "demo"), df, overwrite=True)  # ensures parents=True
+        st.success(f"Cached ➜ {path}")
+
+    st.write("**Preview**")
+    st.dataframe(df, height=360, width="stretch")
