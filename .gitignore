@@ -1,0 +1,11 @@
+﻿.venv/
+.mlruns/
+src/algo5.egg-info/
+dist/
+build/
+ui/build/
+node_modules/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.DS_Store
