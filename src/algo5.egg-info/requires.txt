@@ -1,6 +1,0 @@
-pandas>=2.0
-pyarrow>=14.0
-
-[test]
-pytest>=8.0
-pytest-cov>=6.0
