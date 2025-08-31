@@ -9,3 +9,4 @@ node_modules/
 .ruff_cache/
 .mypy_cache/
 .DS_Store
+tmp/
