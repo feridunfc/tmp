@@ -1,0 +1,38 @@
+﻿*** Begin Patch
+*** Add File: src/algo5/db/schema.sql
++-- Minimal, SQLite-uyumlu şema (DuckDB/Postgres'e taşınması kolaydır)
++PRAGMA foreign_keys = ON;
++
++CREATE TABLE IF NOT EXISTS market_data (
++    symbol       TEXT    NOT NULL,
++    ts           INTEGER NOT NULL,        -- epoch ms
++    open         REAL,
++    high         REAL,
++    low          REAL,
++    close        REAL,
++    volume       REAL,
++    granularity  TEXT    NOT NULL,        -- '1m','1h','1d'...
++    PRIMARY KEY (symbol, ts, granularity)
++);
++
++-- Feature’ları uzun formatta saklıyoruz; versiyonlama için version alanı var
++CREATE TABLE IF NOT EXISTS asset_features_v1 (
++    symbol       TEXT    NOT NULL,
++    ts           INTEGER NOT NULL,
++    granularity  TEXT    NOT NULL,
++    feature_name TEXT    NOT NULL,
++    feature_value REAL   NOT NULL,
++    version      TEXT    NOT NULL DEFAULT 'v1',
++    PRIMARY KEY (symbol, ts, granularity, feature_name, version)
++);
++
++-- Basit runs tablosu (ileride audit/metrics/artefacts genişletilir)
++CREATE TABLE IF NOT EXISTS runs (
++    run_id      TEXT PRIMARY KEY,
++    created_at  INTEGER,          -- epoch ms
++    commit_hash TEXT,
++    config_json TEXT,
++    notes       TEXT
++);
++
+*** End Patch
