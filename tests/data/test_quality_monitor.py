@@ -10,7 +10,7 @@ def test_schema_check_ok(demo_df):
 
 
 def test_schema_check_missing(demo_df):
-    bad = demo_df.drop(columns=["Volume"])
+    bad = demo_df.drop(columns=["volume"])
     rep = DataQualityMonitor().run(bad)
     assert rep["ok"] is False
-    assert "Volume" in rep["SchemaCheck"]["missing"]
+    assert "volume" in rep["SchemaCheck"]["missing"]
