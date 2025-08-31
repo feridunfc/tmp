@@ -1,4 +1,4 @@
-from algo5.engine.execution.models import Order, OrderType, Side, TIF
+from algo5.engine.execution.models import Order, OrderType, Side
 from algo5.engine.execution.matcher import match_order_on_bar
 from algo5.engine.execution.gateways.paper import PaperGateway
 
@@ -38,7 +38,13 @@ def test_paper_gateway_simple_roundtrip():
 
 def test_stop_limit_requires_both_conditions():
     # stop tetikler ama limit şartı yoksa fill olmaz (aynı bar)
-    od = Order(side=Side.BUY, qty=1, type=OrderType.STOP_LIMIT, stop_price=100, limit_price=99.2)
+    od = Order(
+        side=Side.BUY,
+        qty=1,
+        type=OrderType.STOP_LIMIT,
+        stop_price=100,
+        limit_price=99.2,
+    )
     f = match_order_on_bar(od, o=100, h=101, l=99.3, c=100)
     assert f is None
 

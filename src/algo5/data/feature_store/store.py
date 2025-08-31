@@ -1,18 +1,19 @@
-
 from __future__ import annotations
 from pathlib import Path
 from typing import Tuple, Union
 import pandas as pd
 
-Key = Union[str, Tuple[str,str]]
+Key = Union[str, Tuple[str, str]]
+
 
 class FeatureStore:
-    def __init__(self, root: Path|str|None=None):
+    def __init__(self, root: Path | str | None = None):
         from .cache import DEFAULT_CACHE_ROOT, _ensure_dir
+
         self.root = Path(root) if root else DEFAULT_CACHE_ROOT
         _ensure_dir(self.root)
 
-    def _path_for(self, key: Key, *, prefer: str|None=None) -> Path:
+    def _path_for(self, key: Key, *, prefer: str | None = None) -> Path:
         if isinstance(key, str):
             ns, name = key.split("/", 1)
         else:
@@ -25,11 +26,12 @@ class FeatureStore:
     def _has_pyarrow(self) -> bool:
         try:
             import pyarrow  # noqa: F401
+
             return True
         except Exception:
             return False
 
-    def save(self, key: Key, df: pd.DataFrame, *, overwrite: bool=False) -> Path:
+    def save(self, key: Key, df: pd.DataFrame, *, overwrite: bool = False) -> Path:
         if self._has_pyarrow():
             path = self._path_for(key, prefer=".parquet")
             if path.exists() and not overwrite:
