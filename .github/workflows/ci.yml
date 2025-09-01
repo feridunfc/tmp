@@ -49,3 +49,10 @@ jobs:
         with:
           name: coverage-${{ matrix.python-version }}
           path: coverage.xml
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage.xml
+          # public repo ise token gerekmez; private ise ekle:
+          token: ${{ secrets.CODECOV_TOKEN }}

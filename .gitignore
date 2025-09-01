@@ -12,6 +12,8 @@ node_modules/
 tmp/
 __pycache__/
 .idea/
+.coverage
+*.egg-info/
 
 
 # IDE / Editors
