@@ -36,3 +36,13 @@ src/algo5.egg-info/
 src/algo5.egg-info/
 
 .coverage
+
+.coverage.*
+coverage.xml
+htmlcov/
+
+
+* text=auto
+*.py text eol=lf
+*.yml text eol=lf
+*.toml text eol=lf

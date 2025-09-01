@@ -21,3 +21,9 @@ warn_redundant_casts = true
 warn_unused_ignores = true
 warn_unused_configs = true
 pretty = true
+
+[project.scripts]
+algo5-sim = "algo5.app.runtime:main"
+
+[tool.setuptools.package-data]
+"algo5" = ["py.typed"]
