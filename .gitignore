@@ -12,3 +12,21 @@ node_modules/
 tmp/
 __pycache__/
 .idea/
+
+
+# IDE / Editors
+.idea/
+.vscode/
+
+# Python
+.venv/
+__pycache__/
+.pytest_cache/
+
+# Local caches & data
+.cache/
+*.parquet
+
+src/algo5.egg-info/
+
+src/algo5.egg-info/
