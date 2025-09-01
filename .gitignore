@@ -32,3 +32,5 @@ src/algo5.egg-info/
 src/algo5.egg-info/
 
 src/algo5.egg-info/
+
+.coverage
