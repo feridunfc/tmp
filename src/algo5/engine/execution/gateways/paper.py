@@ -33,13 +33,13 @@ class PaperGateway:
         c: float | None = None,
         **kwargs,
     ) -> List[Fill]:
-        # Back-compat: allow callers to pass l=... instead of low=...
+        # Back-compat: allow callers to pass low=... instead of low=...
         if low is None and "l" in kwargs:
             low = kwargs["l"]
 
         if low is None:
             raise TypeError(
-                "on_bar(): required arg 'low' not provided (use 'low=...' or 'l=...')."
+                "on_bar(): required arg 'low' not provided (use 'low=...' or 'low=...')."
             )
         if c is None:
             raise TypeError("on_bar(): required arg 'c' not provided (use 'c=...').")
@@ -62,7 +62,7 @@ class PaperGateway:
             else:
                 remaining.append(order)
 
-        # Filled olmayanlar kuyrukta kalsın
+        # Filled olmayanlar kuyrukta kalsÄ±n
         self.orders = remaining
 
         # Filleri hesap/pozisyona uygula
@@ -72,7 +72,7 @@ class PaperGateway:
         return fills
 
     def _apply_fill(self, f: Fill) -> None:
-        """Fill'i uygula: nakit ve pozisyonu güncelle, işlemi kaydet."""
+        """Fill'i uygula: nakit ve pozisyonu gÃ¼ncelle, iÅŸlemi kaydet."""
         commission = getattr(f, "commission", 0.0) or 0.0
         self.cash -= f.qty * f.price + commission
         self.position += f.qty

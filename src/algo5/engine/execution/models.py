@@ -28,6 +28,7 @@ class Order:
     side: Side
     qty: float
     type: OrderType
+    symbol: str = "AAPL"
     limit_price: Optional[float] = None
     stop_price: Optional[float] = None
     tif: TIF = TIF.GTC
