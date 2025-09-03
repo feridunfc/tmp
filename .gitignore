@@ -41,6 +41,13 @@ src/algo5.egg-info/
 coverage.xml
 htmlcov/
 
+*.pyc
+**/__pycache__/
+*.rar
+.coverage
+coverage.xml
+dist/
+build/
 
 * text=auto
 *.py text eol=lf
