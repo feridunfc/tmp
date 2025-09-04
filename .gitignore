@@ -73,3 +73,13 @@ coverage.xml
 htmlcov/
 
 *.rar
+
+*.rar
+*.zip
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.rar
+*.zip
