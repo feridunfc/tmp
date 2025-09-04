@@ -1,85 +1,40 @@
-﻿.venv/
-.mlruns/
-src/algo5.egg-info/
-dist/
-build/
-ui/build/
-node_modules/
-.pytest_cache/
-.ruff_cache/
-.mypy_cache/
-.DS_Store
-tmp/
-__pycache__/
-.idea/
-.coverage
-*.egg-info/
-
-
-# IDE / Editors
+﻿# --- IDE / Editors ---
 .idea/
 .vscode/
 
-# Python
+# --- Python ---
 .venv/
 __pycache__/
+*.py[cod]
+*.pyd
+
+# --- Test & Coverage ---
 .pytest_cache/
-
-# Local caches & data
-.cache/
-*.parquet
-
-src/algo5.egg-info/
-
-src/algo5.egg-info/
-
-src/algo5.egg-info/
-
 .coverage
-
 .coverage.*
 coverage.xml
 htmlcov/
 
-*.pyc
-**/__pycache__/
-*.rar
-.coverage
-coverage.xml
-dist/
-build/
-
-* text=auto
-*.py text eol=lf
-*.yml text eol=lf
-*.toml text eol=lf
-.idea/
-.vscode/
-.venv/
-__pycache__/
-*.pyc
-.pytest_cache/
-.cache/
+# --- Build artifacts ---
 dist/
 build/
 *.egg-info/
+
+# --- Local caches & data ---
+.cache/
+.ruff_cache/
+.mypy_cache/
+.mlruns/
+tmp/
 *.parquet
-*.rar
-*.zip
-.coverage
-coverage.xml
 
-coverage.xml
-htmlcov/
+# --- Frontend / Node ---
+node_modules/
+ui/build/
 
-*.rar
+# --- OS junk ---
+.DS_Store
 
-*.rar
-*.zip
-
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
+# --- Archives ---
 *.rar
 *.zip
