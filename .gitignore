@@ -68,3 +68,6 @@ build/
 *.zip
 .coverage
 coverage.xml
+
+coverage.xml
+htmlcov/
