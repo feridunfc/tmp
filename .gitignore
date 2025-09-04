@@ -53,3 +53,18 @@ build/
 *.py text eol=lf
 *.yml text eol=lf
 *.toml text eol=lf
+.idea/
+.vscode/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.cache/
+dist/
+build/
+*.egg-info/
+*.parquet
+*.rar
+*.zip
+.coverage
+coverage.xml

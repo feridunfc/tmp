@@ -1,0 +1,333 @@
+[1mdiff --git a/.gitignore b/.gitignore[m
+[1mindex 6c3c139..3e1c85b 100644[m
+[1m--- a/.gitignore[m
+[1m+++ b/.gitignore[m
+[36m@@ -41,6 +41,13 @@[m [msrc/algo5.egg-info/[m
+ coverage.xml[m
+ htmlcov/[m
+ [m
+[32m+[m[32m*.pyc[m
+[32m+[m[32m**/__pycache__/[m
+[32m+[m[32m*.rar[m
+[32m+[m[32m.coverage[m
+[32m+[m[32mcoverage.xml[m
+[32m+[m[32mdist/[m
+[32m+[m[32mbuild/[m
+ [m
+ * text=auto[m
+ *.py text eol=lf[m
+[1mdiff --git a/algo5-v0.1.4-5-gb2acd33-b2acd33-20250902-080232.zip b/algo5-v0.1.4-5-gb2acd33-b2acd33-20250902-080232.zip[m
+[1mnew file mode 100644[m
+[1mindex 0000000..47ab1ec[m
+Binary files /dev/null and b/algo5-v0.1.4-5-gb2acd33-b2acd33-20250902-080232.zip differ
+[1mdiff --git a/src/algo5/app/cli_backtest.py b/src/algo5/app/cli_backtest.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..ac7358a[m
+[1m--- /dev/null[m
+[1m+++ b/src/algo5/app/cli_backtest.py[m
+[36m@@ -0,0 +1,83 @@[m
+[32m+[m[32m"""Backtest CLI: CSV/Parquet oku, replayer çalıştır, opsiyonel vectorized kıyas yazdır."""[m
+[32m+[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m
+[32m+[m[32mimport argparse[m
+[32m+[m[32mfrom pathlib import Path[m
+[32m+[m[32mimport pandas as pd[m
+[32m+[m
+[32m+[m[32mfrom algo5.backtest.engine import BarReplayer, VectorizedBaseline[m
+[32m+[m[32mfrom algo5.metrics.perf import ([m
+[32m+[m[32m    equity_to_returns,[m
+[32m+[m[32m    max_drawdown,[m
+[32m+[m[32m    sortino_ratio,[m
+[32m+[m[32m    calmar_ratio,[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef _load(path: str) -> pd.DataFrame:[m
+[32m+[m[32m    p = Path(path)[m
+[32m+[m[32m    if not p.exists():[m
+[32m+[m[32m        raise FileNotFoundError(path)[m
+[32m+[m[32m    if p.suffix.lower() == ".csv":[m
+[32m+[m[32m        df = pd.read_csv(p, index_col=0, parse_dates=True)[m
+[32m+[m[32m    elif p.suffix.lower() in {".pq", ".parq", ".parquet"}:[m
+[32m+[m[32m        df = pd.read_parquet(p)[m
+[32m+[m[32m        if not isinstance(df.index, pd.DatetimeIndex) and "ts" in df.columns:[m
+[32m+[m[32m            df = df.set_index("ts")[m
+[32m+[m[32m    else:[m
+[32m+[m[32m        raise ValueError(f"Unsupported file type: {p.suffix}")[m
+[32m+[m[32m    return df[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef main() -> None:[m
+[32m+[m[32m    ap = argparse.ArgumentParser(description="Algo5 backtest runner")[m
+[32m+[m[32m    ap.add_argument("--csv", type=str, help="OHLC CSV (index=datetime)")[m
+[32m+[m[32m    ap.add_argument("--parquet", type=str, help="OHLC Parquet")[m
+[32m+[m[32m    ap.add_argument("--symbol", type=str, default="AAPL")[m
+[32m+[m[32m    ap.add_argument("--initial-cash", type=float, default=10_000.0)[m
+[32m+[m[32m    ap.add_argument("--output", type=str, help="CSV çıktısı (snapshots)")[m
+[32m+[m[32m    ap.add_argument([m
+[32m+[m[32m        "--vectorized", action="store_true", help="Vectorized baseline da üret"[m
+[32m+[m[32m    )[m
+[32m+[m[32m    ap.add_argument("--verbose", action="store_true")[m
+[32m+[m[32m    args = ap.parse_args()[m
+[32m+[m
+[32m+[m[32m    src = args.csv or args.parquet[m
+[32m+[m[32m    if not src:[m
+[32m+[m[32m        ap.error("Either --csv or --parquet is required.")[m
+[32m+[m
+[32m+[m[32m    df = _load(src)[m
+[32m+[m
+[32m+[m[32m    # Event-driven replayer[m
+[32m+[m[32m    rep = BarReplayer(initial_cash=args.initial_cash)[m
+[32m+[m[32m    snaps = rep.run(df, args.symbol)[m
+[32m+[m
+[32m+[m[32m    # Son equity serisi[m
+[32m+[m[32m    equity = pd.Series([s.equity for s in snaps], index=[s.timestamp for s in snaps])[m
+[32m+[m[32m    ret = equity_to_returns(equity)[m
+[32m+[m
+[32m+[m[32m    # Özet[m
+[32m+[m[32m    print([m
+[32m+[m[32m        f"[algo5-backtest] bars={len(df)} snaps={len(snaps)} "[m
+[32m+[m[32m        f"equity={equity.iloc[-1]:.2f} mdd={max_drawdown(equity):.4f} "[m
+[32m+[m[32m        f"sortino={sortino_ratio(ret):.3f} calmar={calmar_ratio(equity):.3f}"[m
+[32m+[m[32m    )[m
+[32m+[m
+[32m+[m[32m    if args.output:[m
+[32m+[m[32m        out = pd.DataFrame([m
+[32m+[m[32m            {"equity": equity, "returns": ret.reindex(equity.index).fillna(0.0)}[m
+[32m+[m[32m        )[m
+[32m+[m[32m        out.to_csv(args.output, index=True)[m
+[32m+[m[32m        if args.verbose:[m
+[32m+[m[32m            print(f"[algo5-backtest] wrote {args.output}")[m
+[32m+[m
+[32m+[m[32m    if args.vectorized:[m
+[32m+[m[32m        base = VectorizedBaseline(initial_cash=args.initial_cash).run(df)[m
+[32m+[m[32m        if args.verbose:[m
+[32m+[m[32m            print("[algo5-backtest] vectorized baseline head:")[m
+[32m+[m[32m            print(base.head())[m
+[32m+[m
+[32m+[m
+[32m+[m[32mif __name__ == "__main__":[m
+[32m+[m[32m    main()[m
+[1mdiff --git a/src/algo5/backtest/engines.py b/src/algo5/backtest/engines.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..9908f9b[m
+[1m--- /dev/null[m
+[1m+++ b/src/algo5/backtest/engines.py[m
+[36m@@ -0,0 +1,73 @@[m
+[32m+[m[32m﻿"""Backtest engines.[m
+[32m+[m
+[32m+[m[32m- BarReplayer: Event-driven motor; DF satırlarını Tick olarak EventBus’a yollar,[m
+[32m+[m[32m  PortfolioUpdated snapshot’larını toplar.[m
+[32m+[m[32m- VectorizedBaseline: Stratejiden bağımsız, vektörel baseline equity eğrisi.[m
+[32m+[m
+[32m+[m[32mBu modül, `algo5.backtest.engine` shim’iyle de geriye dönük uyumlu çalışır.[m
+[32m+[m[32m"""[m
+[32m+[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m
+[32m+[m[32mfrom dataclasses import dataclass, field[m
+[32m+[m[32mfrom typing import List[m
+[32m+[m
+[32m+[m[32mimport pandas as pd[m
+[32m+[m
+[32m+[m[32mfrom algo5.app.runtime import build_event_driven_app[m
+[32m+[m[32mfrom algo5.core.events import PortfolioUpdated, Tick[m
+[32m+[m
+[32m+[m[32m__all__ = ["BarReplayer", "VectorizedBaseline"][m
+[32m+[m
+[32m+[m
+[32m+[m[32m@dataclass[m
+[32m+[m[32mclass BarReplayer:[m
+[32m+[m[32m    """Event-driven backtest: her bar'ı Tick olarak yayınlar, portföy snapshot'larını toplar."""[m
+[32m+[m
+[32m+[m[32m    df: pd.DataFrame[m
+[32m+[m[32m    symbol: str = "AAPL"[m
+[32m+[m[32m    initial_cash: float = 10_000.0[m
+[32m+[m[32m    snapshots: List[PortfolioUpdated] = field(default_factory=list)[m
+[32m+[m
+[32m+[m[32m    def run(self) -> List[PortfolioUpdated]:[m
+[32m+[m[32m        bus, *_ = build_event_driven_app(self.initial_cash)[m
+[32m+[m
+[32m+[m[32m        def _on_pu(e: PortfolioUpdated, _bus) -> None:[m
+[32m+[m[32m            self.snapshots.append(e)[m
+[32m+[m
+[32m+[m[32m        bus.subscribe(PortfolioUpdated, _on_pu)[m
+[32m+[m
+[32m+[m[32m        # Open/High/Low/Close/Volume kolon isimlerini esnekçe oku[m
+[32m+[m[32m        def _get(row, *cands, default=None) -> float:[m
+[32m+[m[32m            for c in cands:[m
+[32m+[m[32m                if c in row:[m
+[32m+[m[32m                    return float(row[c])[m
+[32m+[m[32m            return float(default if default is not None else 0.0)[m
+[32m+[m
+[32m+[m[32m        for ts, row in self.df.iterrows():[m
+[32m+[m[32m            # Yaygın isimler: Open/High/Low/Close/Volume veya o/h/l/c/volume[m
+[32m+[m[32m            o = _get(row, "Open", "o")[m
+[32m+[m[32m            h = _get(row, "High", "h", default=o)[m
+[32m+[m[32m            l = _get(row, "Low", "l", default=o)[m
+[32m+[m[32m            c = _get(row, "Close", "c", default=o)[m
+[32m+[m[32m            vol = _get(row, "Volume", "volume", "v", default=0.0)[m
+[32m+[m
+[32m+[m[32m            ts_dt = pd.to_datetime(ts)[m
+[32m+[m[32m            bus.publish(Tick(ts_dt, self.symbol, o, h, l, c, vol))[m
+[32m+[m
+[32m+[m[32m        return self.snapshots[m
+[32m+[m
+[32m+[m
+[32m+[m[32m@dataclass[m
+[32m+[m[32mclass VectorizedBaseline:[m
+[32m+[m[32m    """Vektörel baseline: fiyat getirilerinin bileşiklenmesiyle equity eğrisi üretir."""[m
+[32m+[m
+[32m+[m[32m    df: pd.DataFrame[m
+[32m+[m[32m    price_col: str = "Close"[m
+[32m+[m
+[32m+[m[32m    def equity_curve(self, initial_cash: float = 10_000.0) -> pd.Series:[m
+[32m+[m[32m        prices = pd.Series(self.df[self.price_col], copy=True).astype(float)[m
+[32m+[m[32m        rets = prices.pct_change().fillna(0.0)[m
+[32m+[m[32m        equity = initial_cash * (1.0 + rets).cumprod()[m
+[32m+[m[32m        equity.index = self.df.index[m
+[32m+[m[32m        return equity[m
+[1mdiff --git a/src/algo5/engine/execution/__pycache__/matcher.cpython-312.pyc b/src/algo5/engine/execution/__pycache__/matcher.cpython-312.pyc[m
+[1mindex 386ccd6..48041e0 100644[m
+Binary files a/src/algo5/engine/execution/__pycache__/matcher.cpython-312.pyc and b/src/algo5/engine/execution/__pycache__/matcher.cpython-312.pyc differ
+[1mdiff --git a/src/algo5/engine/execution/__pycache__/models.cpython-312.pyc b/src/algo5/engine/execution/__pycache__/models.cpython-312.pyc[m
+[1mindex a67a678..c611594 100644[m
+Binary files a/src/algo5/engine/execution/__pycache__/models.cpython-312.pyc and b/src/algo5/engine/execution/__pycache__/models.cpython-312.pyc differ
+[1mdiff --git a/src/algo5/engine/execution/gateways/__pycache__/paper.cpython-312.pyc b/src/algo5/engine/execution/gateways/__pycache__/paper.cpython-312.pyc[m
+[1mindex 5dc505c..30351f1 100644[m
+Binary files a/src/algo5/engine/execution/gateways/__pycache__/paper.cpython-312.pyc and b/src/algo5/engine/execution/gateways/__pycache__/paper.cpython-312.pyc differ
+[1mdiff --git a/src/algo5/metrics/perf.py b/src/algo5/metrics/perf.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..5ca2102[m
+[1m--- /dev/null[m
+[1m+++ b/src/algo5/metrics/perf.py[m
+[36m@@ -0,0 +1,55 @@[m
+[32m+[m[32m﻿"""Performance metrics utilities.[m
+[32m+[m
+[32m+[m[32mBu modül testlerin beklediği üç yardımcıyı sağlar:[m
+[32m+[m[32m- equity_to_returns: equity serisinden getiriler[m
+[32m+[m[32m- sortino_ratio: aşağı yönlü volatiliteyi kullanan risk-ayarlı getiri[m
+[32m+[m[32m- calmar_ratio: yıllık getiri / maksimum düşüş (max drawdown)[m
+[32m+[m[32m"""[m
+[32m+[m
+[32m+[m[32mfrom __future__ import annotations[m
+[32m+[m
+[32m+[m[32mimport numpy as np[m
+[32m+[m[32mimport pandas as pd[m
+[32m+[m
+[32m+[m[32m__all__ = ["equity_to_returns", "sortino_ratio", "calmar_ratio"][m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef equity_to_returns(equity: pd.Series | list[float]) -> pd.Series:[m
+[32m+[m[32m    """Equity → yüzde değişim getirisi (ilk gözlem 0.0)."""[m
+[32m+[m[32m    eq = pd.Series(equity, copy=True, dtype="float64")[m
+[32m+[m[32m    ret = eq.pct_change().fillna(0.0)[m
+[32m+[m[32m    ret.index = getattr(equity, "index", ret.index)[m
+[32m+[m[32m    return ret[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef sortino_ratio([m
+[32m+[m[32m    returns: pd.Series | list[float], rf: float = 0.0, periods: int = 252[m
+[32m+[m[32m) -> float:[m
+[32m+[m[32m    """Sortino ratio (yıllıklaştırılmış).[m
+[32m+[m
+[32m+[m[32m    rf yıllık risksiz oran; per-period’a bölünüp kullanılır.[m
+[32m+[m[32m    """[m
+[32m+[m[32m    r = pd.Series(returns, copy=True, dtype="float64")[m
+[32m+[m[32m    excess = r - (rf / periods)[m
+[32m+[m[32m    downside = excess[excess < 0.0][m
+[32m+[m[32m    downside_std = float(downside.std(ddof=0))[m
+[32m+[m[32m    if downside_std == 0.0 or np.isnan(downside_std):[m
+[32m+[m[32m        return float("inf")[m
+[32m+[m[32m    mean_excess = float(excess.mean())[m
+[32m+[m[32m    return (mean_excess / downside_std) * np.sqrt(periods)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef calmar_ratio(returns: pd.Series | list[float], periods: int = 252) -> float:[m
+[32m+[m[32m    """Calmar ratio = yıllık getiri / max drawdown (mutlak değer)."""[m
+[32m+[m[32m    r = pd.Series(returns, copy=True, dtype="float64")[m
+[32m+[m[32m    n = len(r)[m
+[32m+[m[32m    if n == 0:[m
+[32m+[m[32m        return np.nan[m
+[32m+[m[32m    cum = (1.0 + r).cumprod()[m
+[32m+[m[32m    roll_max = cum.cummax()[m
+[32m+[m[32m    drawdown = (cum / roll_max) - 1.0[m
+[32m+[m[32m    max_dd = float(-drawdown.min()) if len(drawdown) else 0.0[m
+[32m+[m[32m    if max_dd <= 0.0:[m
+[32m+[m[32m        return float("inf")[m
+[32m+[m[32m    ann_return = float(cum.iloc[-1] ** (periods / max(n, 1)) - 1.0)[m
+[32m+[m[32m    return ann_return / max_dd[m
+[1mdiff --git a/tests/backtest/test_edge_cases.py b/tests/backtest/test_edge_cases.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..043a37d[m
+[1m--- /dev/null[m
+[1m+++ b/tests/backtest/test_edge_cases.py[m
+[36m@@ -0,0 +1,36 @@[m
+[32m+[m[32mimport pandas as pd[m
+[32m+[m[32mimport pytest[m
+[32m+[m
+[32m+[m[32mfrom algo5.backtest.engine import BarReplayer, VectorizedBaseline[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_empty_dataframe_replayer():[m
+[32m+[m[32m    rep = BarReplayer()[m
+[32m+[m[32m    with pytest.raises(ValueError):[m
+[32m+[m[32m        rep.run(pd.DataFrame(), "AAPL")[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_single_bar_replayer():[m
+[32m+[m[32m    idx = pd.date_range("2025-01-01", periods=1, freq="T")[m
+[32m+[m[32m    df = pd.DataFrame([m
+[32m+[m[32m        {"Open": [100], "High": [101], "Low": [99], "Close": [100.5]}, index=idx[m
+[32m+[m[32m    )[m
+[32m+[m[32m    snaps = BarReplayer().run(df, "AAPL")[m
+[32m+[m[32m    assert len(snaps) >= 1[m
+[32m+[m[32m    assert snaps[-1].equity > 0[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_vectorized_baseline_min():[m
+[32m+[m[32m    idx = pd.date_range("2025-01-01", periods=3, freq="T")[m
+[32m+[m[32m    df = pd.DataFrame([m
+[32m+[m[32m        {[m
+[32m+[m[32m            "Open": [100, 100, 100],[m
+[32m+[m[32m            "High": [101, 101, 101],[m
+[32m+[m[32m            "Low": [99, 99, 99],[m
+[32m+[m[32m            "Close": [101, 99, 102],[m
+[32m+[m[32m        },[m
+[32m+[m[32m        index=idx,[m
+[32m+[m[32m    )[m
+[32m+[m[32m    out = VectorizedBaseline().run(df)[m
+[32m+[m[32m    assert {"equity", "returns", "position", "unrealized_pnl"} <= set(out.columns)[m
+[32m+[m[32m    assert len(out) == 3[m
+[1mdiff --git a/tests/execution/__pycache__/test_models_matcher_gateway.cpython-312-pytest-8.3.5.pyc b/tests/execution/__pycache__/test_models_matcher_gateway.cpython-312-pytest-8.3.5.pyc[m
+[1mindex 3f127e9..9aa8763 100644[m
+Binary files a/tests/execution/__pycache__/test_models_matcher_gateway.cpython-312-pytest-8.3.5.pyc and b/tests/execution/__pycache__/test_models_matcher_gateway.cpython-312-pytest-8.3.5.pyc differ
+[1mdiff --git a/tests/metrics/test_perf_metrics.py b/tests/metrics/test_perf_metrics.py[m
+[1mnew file mode 100644[m
+[1mindex 0000000..dc31716[m
+[1m--- /dev/null[m
+[1m+++ b/tests/metrics/test_perf_metrics.py[m
+[36m@@ -0,0 +1,18 @@[m
+[32m+[m[32mimport pandas as pd[m
+[32m+[m[32mfrom algo5.metrics.perf import ([m
+[32m+[m[32m    equity_to_returns,[m
+[32m+[m[32m    max_drawdown,[m
+[32m+[m[32m    sortino_ratio,[m
+[32m+[m[32m    calmar_ratio,[m
+[32m+[m[32m)[m
+[32m+[m
+[32m+[m
+[32m+[m[32mdef test_metrics_basic():[m
+[32m+[m[32m    eq = pd.Series([m
+[32m+[m[32m        [100, 102, 98, 103], index=pd.date_range("2025-01-01", periods=4, freq="D")[m
+[32m+[m[32m    )[m
+[32m+[m[32m    r = equity_to_returns(eq)[m
+[32m+[m[32m    assert len(r) == 3[m
+[32m+[m[32m    assert max_drawdown(eq) <= 0[m
+[32m+[m[32m    _ = sortino_ratio(r)[m
+[32m+[m[32m    _ = calmar_ratio(eq)[m
+[1mdiff --git a/tt.zip b/tt.zip[m
+[1mnew file mode 100644[m
+[1mindex 0000000..299913d[m
+Binary files /dev/null and b/tt.zip differ
