@@ -1,6 +1,6 @@
-[project]
+﻿[project]
 name = "algo5"
-version = "0.1.2"
+version = "0.1.5"
 requires-python = ">=3.10"
 dependencies = ["pandas>=2.0","pyarrow>=14.0"]
 [project.optional-dependencies]
@@ -15,7 +15,7 @@ pythonpath = ["src"]
 python_version = "3.12"
 mypy_path = "src"
 explicit_package_bases = true
-files = ["src", "tests"]          # <-- sadece bunları tara
+files = ["src", "tests"]          # <-- sadece bunlarÄ± tara
 ignore_missing_imports = true
 warn_redundant_casts = true
 warn_unused_ignores = true
