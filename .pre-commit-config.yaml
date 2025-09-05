@@ -27,11 +27,13 @@ repos:
           - types-PyYAML
           - types-python-dateutil
 
+
   - repo: local
     hooks:
-      - id: pytest-wrapper
+      - id: pytest-pre-push
         name: Run pytest with coverage (pre-push)
         language: system
         entry: python precommit_pytest.py
         pass_filenames: false
         stages: [pre-push]
+        always_run: true
