@@ -1,23 +1,20 @@
-from __future__ import annotations
+﻿import json
 
-import json
-from dataclasses import dataclass
-
-from algo5.core.observability import structured_log
+from algo5.core.observability import structured_log, parse_structured_log
 
 
-@dataclass
-class DummyEvt:
-    x: int
-    y: str
+def test_structured_log_shape():
+    s = structured_log("unit.test", price=100, meta={"x": 1})
+    doc = json.loads(s)
+    assert {"ts", "event", "trace_id"} <= set(doc.keys())
+    assert doc["event"] == "unit.test"
+    assert isinstance(doc["trace_id"], str) and len(doc["trace_id"]) >= 16
+    assert doc["price"] == 100
+    assert doc["meta"]["x"] == 1
 
 
-def test_structured_log_json_out(capsys):
-    evt = DummyEvt(3, "ok")
-    line = structured_log(evt, trace_id="abc")
-    out, _ = capsys.readouterr()
-    parsed = json.loads(line)
-    assert parsed["event"] == "DummyEvt"
-    assert parsed["trace_id"] == "abc"
-    assert parsed["payload"] == {"x": 3, "y": "ok"}
-    assert out.strip() == line.strip()
+def test_parse_roundtrip():
+    s = structured_log("roundtrip", foo="bar")
+    doc = parse_structured_log(s)
+    assert doc["event"] == "roundtrip"
+    assert doc["foo"] == "bar"

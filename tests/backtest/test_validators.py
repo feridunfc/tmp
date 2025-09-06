@@ -1,28 +1,46 @@
-from __future__ import annotations
-
+﻿import numpy as np
 import pandas as pd
+import pytest
 
-from algo5.engine.backtest.validators import enforce_one_bar_delay, validate_ohlc_monotonic
-
-
-def test_validate_ohlc_monotonic_ok():
-    idx = pd.date_range("2024-01-01", periods=5, freq="D", tz="UTC")
-    df = pd.DataFrame(
-        {
-            "open": [10, 11, 12, 13, 14],
-            "high": [11, 12, 13, 14, 15],
-            "low": [9, 10, 11, 12, 13],
-            "close": [10.5, 11.5, 12.5, 13.5, 14.5],
-        },
-        index=idx,
-    )
-    assert validate_ohlc_monotonic(df) is True
+from algo5.engine.backtest.validators import (
+    OHLCVSpec,
+    normalize_ohlcv,
+    validate_ohlcv,
+)
 
 
-def test_enforce_one_bar_delay_shifts_and_fills_zero():
-    idx = pd.date_range("2024-01-01", periods=3, freq="D", tz="UTC")
-    s = pd.Series([0, 1, 0.5], index=idx, dtype=float)
-    out = enforce_one_bar_delay(s)
-    assert out.iloc[0] == 0.0
-    assert out.iloc[1] == 0.0
-    assert out.iloc[2] == 1.0
+def _make_df(tz="UTC", with_volume=True, n=5):
+    idx = pd.date_range("2024-01-01", periods=n, freq="D", tz=tz)
+    data = {
+        "Open": np.arange(n) + 10.0,
+        "High": np.arange(n) + 11.0,
+        "Low": np.arange(n) + 9.0,
+        "Close": np.arange(n) + 10.5,
+    }
+    if with_volume:
+        data["Volume"] = np.arange(n) + 100
+    return pd.DataFrame(data, index=idx)
+
+
+def test_validate_ok_with_volume():
+    df = _make_df(with_volume=True)
+    validate_ohlcv(df, spec=OHLCVSpec(require_volume=True))
+
+
+def test_validate_fails_missing_volume():
+    df = _make_df(with_volume=False)
+    with pytest.raises(ValueError, match="missing"):
+        validate_ohlcv(df, spec=OHLCVSpec(require_volume=True))
+
+
+def test_validate_fails_naive_index_when_required():
+    df = _make_df(tz=None)
+    with pytest.raises(ValueError, match="timezone"):
+        validate_ohlcv(df, spec=OHLCVSpec(require_tz=True))
+
+
+def test_normalize_localizes_and_casts():
+    df = _make_df(tz=None)
+    out = normalize_ohlcv(df)
+    assert out.index.tz is not None
+    assert out.dtypes["Open"].kind in ("f", "i")
