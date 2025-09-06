@@ -1,5 +1,5 @@
 from algo5.data.feature_store.cache import SmartCache, set_cache_root
-from algo5.data.feature_store.catalog import list_namespaces, list_items
+from algo5.data.feature_store.catalog import list_items, list_namespaces
 
 
 def test_smart_cache_roundtrip(tmp_path, monkeypatch):

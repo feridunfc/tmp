@@ -1,4 +1,5 @@
 import pytest
+
 from algo5.data.validate import validate_ohlcv
 
 

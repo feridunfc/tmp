@@ -1,10 +1,14 @@
 ﻿from __future__ import annotations
-from typing import Dict, Callable, Any
+
+from collections.abc import Callable
+from typing import Any
+
 import numpy as np
 import pandas as pd
-from algo5.metrics.metrics import compute_nav, compute_metrics
 
-StrategyFn = Callable[[Dict[str, pd.DataFrame], dict], Dict[str, pd.Series]]
+from algo5.metrics.metrics import compute_metrics, compute_nav
+
+StrategyFn = Callable[[dict[str, pd.DataFrame], dict], dict[str, pd.Series]]
 
 
 def _clip_align(series: pd.Series, ref_index: pd.Index) -> pd.Series:
@@ -13,12 +17,12 @@ def _clip_align(series: pd.Series, ref_index: pd.Index) -> pd.Series:
 
 
 def run_vector_backtest(
-    prices: Dict[str, pd.DataFrame],
+    prices: dict[str, pd.DataFrame],
     strategy_fn: StrategyFn,
     cfg: dict | None = None,
     initial_capital: float = 100_000.0,
     freq: str = "D",
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Basit portföy backtest:
     - strategy_fn(prices,cfg) -> {symbol: exposure_series(0..1)}
@@ -35,7 +39,7 @@ def run_vector_backtest(
     ref_index = first_df.index
 
     # Getiriler
-    rets_per_symbol: Dict[str, pd.Series] = {}
+    rets_per_symbol: dict[str, pd.Series] = {}
     for sym, df in prices.items():
         if "close" not in df.columns:
             raise ValueError(f"{sym}: 'close' kolonu yok")

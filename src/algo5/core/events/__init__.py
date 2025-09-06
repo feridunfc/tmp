@@ -1,13 +1,13 @@
 """Core domain events (Week-4/5)."""
 
 from .events import (
-    Tick,
-    OrderRequested,
     OrderAuthorized,
-    OrderRejected,
     OrderFilled,
+    OrderRejected,
+    OrderRequested,
     PortfolioUpdated,
     SystemHealth,
+    Tick,
 )
 
 __all__ = [

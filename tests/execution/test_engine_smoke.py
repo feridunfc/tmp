@@ -1,5 +1,6 @@
 ﻿import pandas as pd
-from algo5.metrics.metrics import compute_nav, compute_metrics
+
+from algo5.metrics.metrics import compute_metrics, compute_nav
 
 
 def test_metrics_nav_smoke():

@@ -2,17 +2,15 @@
 """Event-driven runtime wiring (Week-4/5)."""
 from __future__ import annotations
 
-from typing import Tuple
-
+from algo5.app.components import ExecutionEngine, PortfolioManager, RiskGuard, Strategy
 from algo5.core.bus import EventBus
-from algo5.core.events import Tick, OrderRequested, OrderAuthorized, OrderFilled
-from algo5.app.components import Strategy, RiskGuard, ExecutionEngine, PortfolioManager
+from algo5.core.events import OrderAuthorized, OrderFilled, OrderRequested, Tick
 from algo5.engine.execution.gateways.paper import PaperGateway
 
 
 def build_event_driven_app(
     initial_cash: float = 10_000.0,
-) -> Tuple[EventBus, Strategy, RiskGuard, ExecutionEngine, PortfolioManager]:
+) -> tuple[EventBus, Strategy, RiskGuard, ExecutionEngine, PortfolioManager]:
     bus = EventBus()
     strat = Strategy()
     risk = RiskGuard()
@@ -54,8 +52,10 @@ def main() -> None:
     - Keeps all tests/backwards-compat intact (only appends a function).
     """
     import argparse
+
     import pandas as pd
-    from algo5.core.events import Tick, PortfolioUpdated
+
+    from algo5.core.events import PortfolioUpdated, Tick
 
     ap = argparse.ArgumentParser(prog="algo5-sim", description="Algo5 demo runner")
     ap.add_argument("--bars", type=int, default=2, help="Number of synthetic bars")

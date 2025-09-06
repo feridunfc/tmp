@@ -1,8 +1,11 @@
 ﻿# mypy: ignore-errors
 from __future__ import annotations
-import pandas as pd
+
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
+
+import pandas as pd
+
 from .metrics import compute_metrics
 
 
@@ -36,7 +39,7 @@ def time_series_splits(n: int, n_splits: int, min_train: int = 60):
     fold_size = (n - min_train) // n_splits if n_splits > 0 else 0
     start = 0
     train_end = min_train
-    for i in range(n_splits):
+    for _i in range(n_splits):
         test_end = min(n, train_end + fold_size)
         splits.append((slice(start, train_end), slice(train_end, test_end)))
         train_end = test_end

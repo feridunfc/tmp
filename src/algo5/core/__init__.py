@@ -1,13 +1,25 @@
 """Core module for event-driven architecture."""
 
 from .events import (
-    Tick as Tick,
-    OrderRequested as OrderRequested,
     OrderAuthorized as OrderAuthorized,
-    OrderRejected as OrderRejected,
+)
+from .events import (
     OrderFilled as OrderFilled,
+)
+from .events import (
+    OrderRejected as OrderRejected,
+)
+from .events import (
+    OrderRequested as OrderRequested,
+)
+from .events import (
     PortfolioUpdated as PortfolioUpdated,
+)
+from .events import (
     SystemHealth as SystemHealth,
+)
+from .events import (
+    Tick as Tick,
 )
 
 __all__ = [

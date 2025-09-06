@@ -1,7 +1,7 @@
-import os
 import json
+import os
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 DEFAULT_CACHE_ROOT = Path(os.getenv("ALGO5_CACHE_ROOT", ".cache/features"))
 DEFAULT_CACHE_ROOT.mkdir(parents=True, exist_ok=True)
@@ -19,7 +19,7 @@ def _ensure_dir(p: Path):
 
 
 class SmartCache:
-    def __init__(self, root: Optional[Path] = None):
+    def __init__(self, root: Path | None = None):
         self.root = Path(root) if root else DEFAULT_CACHE_ROOT
         _ensure_dir(self.root)
 

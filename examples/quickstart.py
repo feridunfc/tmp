@@ -7,8 +7,9 @@ Relations:
 """
 
 import pandas as pd
+
 from algo5.app.runtime import build_event_driven_app
-from algo5.core.events import Tick, PortfolioUpdated
+from algo5.core.events import PortfolioUpdated, Tick
 
 
 def main() -> None:

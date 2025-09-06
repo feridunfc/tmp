@@ -1,6 +1,7 @@
 ﻿import pandas as pd
-from algo5.core.events import Tick, PortfolioUpdated, OrderRejected
+
 from algo5.app.runtime import build_event_driven_app
+from algo5.core.events import OrderRejected, PortfolioUpdated, Tick
 
 
 def test_market_then_limit_sell_flow():

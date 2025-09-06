@@ -1,5 +1,6 @@
 import numpy as np
-from algo5.data.integrity import df_checksum, Reproducibility
+
+from algo5.data.integrity import Reproducibility, df_checksum
 
 
 def test_df_checksum_changes_when_data_changes(demo_df):

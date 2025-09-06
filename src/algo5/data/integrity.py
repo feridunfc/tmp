@@ -1,6 +1,7 @@
 import hashlib
-import pandas as pd
 from dataclasses import dataclass
+
+import pandas as pd
 
 
 def df_checksum(df: pd.DataFrame) -> str:

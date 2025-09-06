@@ -1,5 +1,5 @@
-from algo5.engine.execution.models import Order, Side, OrderType, TIF
 from algo5.engine.execution.matcher import match_order_on_bar
+from algo5.engine.execution.models import TIF, Order, OrderType, Side
 
 
 def test_stop_sell_gap_fills_at_open():

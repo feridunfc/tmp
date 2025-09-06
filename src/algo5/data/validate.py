@@ -1,13 +1,15 @@
-from typing import Any, Dict, Tuple
+from typing import Any
+
 import pandas as pd
+
 from .schemas import OhlcvSchema
 
 
 def validate_ohlcv(
     df: pd.DataFrame, *, schema: OhlcvSchema | None = None, raise_errors: bool = True
-) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+) -> tuple[pd.DataFrame, dict[str, Any]]:
     schema = schema or OhlcvSchema()
-    report: Dict[str, Any] = {"ok": True, "missing": [], "renamed": {}}
+    report: dict[str, Any] = {"ok": True, "missing": [], "renamed": {}}
     cols_lower = {c.lower(): c for c in df.columns}
     if "close" in cols_lower and "Close" not in df.columns:
         df = df.rename(columns={cols_lower["close"]: "Close"})

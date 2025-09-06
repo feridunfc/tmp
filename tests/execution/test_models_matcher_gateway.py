@@ -1,6 +1,6 @@
-from algo5.engine.execution.models import Order, OrderType, Side
-from algo5.engine.execution.matcher import match_order_on_bar
 from algo5.engine.execution.gateways.paper import PaperGateway
+from algo5.engine.execution.matcher import match_order_on_bar
+from algo5.engine.execution.models import Order, OrderType, Side
 
 
 def test_market_fills_at_open():

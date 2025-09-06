@@ -1,5 +1,6 @@
-﻿from __future__ import annotations
-from typing import Dict
+﻿# mypy: disable-error-code=unreachable
+from __future__ import annotations
+
 import numpy as np
 import pandas as pd
 
@@ -11,7 +12,7 @@ def compute_nav(returns: pd.Series) -> pd.Series:
     return cum
 
 
-def compute_metrics(nav: pd.Series) -> Dict[str, float]:
+def compute_metrics(nav: pd.Series) -> dict[str, float]:
     """NAV serisinden temel metrikleri hesaplar."""
     nav = nav.astype(float)
     rets: pd.Series = nav.pct_change().dropna()

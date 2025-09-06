@@ -1,5 +1,7 @@
 import os
+
 import pytest
+
 from algo5.data.loader import demo_ohlcv
 
 

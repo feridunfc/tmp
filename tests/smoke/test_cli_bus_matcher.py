@@ -1,10 +1,11 @@
 # tests/smoke/test_cli_bus_matcher.py
 from __future__ import annotations
+
 import sys
 
 from algo5.core.bus import EventBus
-from algo5.engine.execution.models import Order, OrderType, Side, TIF
 from algo5.engine.execution.matcher import match_order_on_bar
+from algo5.engine.execution.models import TIF, Order, OrderType, Side
 
 
 def test_cli_main_smoke(monkeypatch, capsys):

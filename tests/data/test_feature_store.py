@@ -1,5 +1,5 @@
-from algo5.data.feature_store.store import FeatureStore
 from algo5.data.feature_store.cache import set_cache_root
+from algo5.data.feature_store.store import FeatureStore
 
 
 def _mk_store(tmp_path):

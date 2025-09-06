@@ -1,5 +1,5 @@
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 
 def demo_ohlcv(*, periods: int = 120, start: str = "2024-01-01") -> pd.DataFrame:

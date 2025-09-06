@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import List, Dict
+
 from ..matcher import match_order_on_bar
-from ..models import Order, Fill
+from ..models import Fill, Order
 
 
 @dataclass
@@ -13,8 +14,8 @@ class PaperGateway:
 
     cash: float = field(init=False)
     position: float = field(init=False, default=0.0)
-    orders: List[Order] = field(init=False, default_factory=list)
-    trades: List[Fill] = field(init=False, default_factory=list)
+    orders: list[Order] = field(init=False, default_factory=list)
+    trades: list[Fill] = field(init=False, default_factory=list)
 
     def __post_init__(self) -> None:
         self.cash = float(self.initial_capital)
@@ -23,8 +24,6 @@ class PaperGateway:
     def submit(self, order: Order) -> None:
         self.orders.append(order)
 
-    from typing import List  # dosyada yoksa ekleyin
-
     def on_bar(
         self,
         o: float,
@@ -32,7 +31,7 @@ class PaperGateway:
         low: float | None = None,
         c: float | None = None,
         **kwargs,
-    ) -> List[Fill]:
+    ) -> list[Fill]:
         # Back-compat: allow callers to pass low=... instead of low=...
         if low is None and "l" in kwargs:
             low = kwargs["l"]
@@ -44,8 +43,8 @@ class PaperGateway:
         if c is None:
             raise TypeError("on_bar(): required arg 'c' not provided (use 'c=...').")
 
-        fills: List[Fill] = []
-        remaining: List[Order] = []
+        fills: list[Fill] = []
+        remaining: list[Order] = []
 
         for order in self.orders:
             fill = match_order_on_bar(
@@ -82,7 +81,7 @@ class PaperGateway:
         return self.cash + self.position * last_price
 
     # small helper for tests
-    def state(self, last_price: float) -> Dict[str, float]:
+    def state(self, last_price: float) -> dict[str, float]:
         return {
             "cash": self.cash,
             "pos": self.position,

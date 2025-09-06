@@ -1,20 +1,20 @@
 from __future__ import annotations
-from dataclasses import dataclass, field
-from typing import Optional, Dict
+
 import logging
+from dataclasses import dataclass, field
 
 from algo5.core.bus import EventBus
 from algo5.core.events import (
-    Tick,
-    OrderRequested,
     OrderAuthorized,
-    OrderRejected,
     OrderFilled,
+    OrderRejected,
+    OrderRequested,
     PortfolioUpdated,
+    Tick,
 )
-from algo5.engine.execution.models import Order, Side, OrderType
-from algo5.engine.execution.matcher import match_order_on_bar
 from algo5.engine.execution.gateways.paper import PaperGateway
+from algo5.engine.execution.matcher import match_order_on_bar
+from algo5.engine.execution.models import Order, OrderType, Side
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ class Strategy:
 
     strategy_id: str = "simple_mean_reversion"
     state: str = "flat"
-    last_tick: Optional[Tick] = None
+    last_tick: Tick | None = None
 
     def on_tick(self, event: Tick, bus: EventBus) -> None:
         prev = self.last_tick
@@ -107,8 +107,8 @@ class ExecutionEngine:
     """Emir execution engine (in-memory pending queue + matcher)."""
 
     gateway: PaperGateway
-    pending_orders: Dict[str, Order] = field(default_factory=dict)
-    last_tick: Optional[Tick] = None
+    pending_orders: dict[str, Order] = field(default_factory=dict)
+    last_tick: Tick | None = None
     order_counter: int = 0
 
     def on_tick(self, event: Tick, bus: EventBus) -> None:
@@ -152,7 +152,7 @@ class PortfolioManager:
     entry_price: float = 0.0
     unrealized_pnl: float = 0.0
     realized_pnl: float = 0.0
-    last_tick: Optional[Tick] = None
+    last_tick: Tick | None = None
 
     def on_order_filled(self, event: OrderFilled, bus: EventBus) -> None:
         f = event.fill

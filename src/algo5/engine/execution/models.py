@@ -1,7 +1,7 @@
 from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Optional
 from uuid import uuid4
 
 
@@ -29,8 +29,8 @@ class Order:
     qty: float
     type: OrderType
     symbol: str = "AAPL"
-    limit_price: Optional[float] = None
-    stop_price: Optional[float] = None
+    limit_price: float | None = None
+    stop_price: float | None = None
     tif: TIF = TIF.GTC
     id: str = field(default_factory=lambda: uuid4().hex)
 

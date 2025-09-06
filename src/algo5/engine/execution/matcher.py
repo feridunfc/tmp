@@ -1,15 +1,14 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
-
-from algo5.engine.execution.models import Order, OrderType, Side, TIF, Fill
+from algo5.engine.execution.models import TIF, Fill, Order, OrderType, Side
 
 
 def _commission(price: float, qty: float, fees_bps: float) -> float:
-    # \"\"\"Basit komisyon hesaplaması (bps).\"\"\"
+    # \"\"\"Basit komisyon hesaplamasÄ± (bps).\"\"\"
     return abs(price * qty) * (fees_bps / 1e4)
 
 
-def match_order_on_bar(
+def match_order_on_bar(  # noqa: C901
     order: Order,
     o: float,
     h: float,
@@ -20,11 +19,11 @@ def match_order_on_bar(
     slippage_bps: float = 0.0,
     **kwargs,
 ) -> Fill | None:
-    # \"\"\"Tek bar üzerinde order eşleştirme.
+    # \"\"\"Tek bar Ã¼zerinde order eÅŸleÅŸtirme.
 
     # Notlar:
-    # - low için l alias'ını da kabul eder.
-    # - Fill.qty yönlüdür: BUY -> +qty, SELL -> -qty.
+    # - low iÃ§in l alias'Ä±nÄ± da kabul eder.
+    # - Fill.qty yÃ¶nlÃ¼dÃ¼r: BUY -> +qty, SELL -> -qty.
     # \"\"\"
     # Alias: l -> low
     if low is None and "l" in kwargs:
@@ -37,11 +36,11 @@ def match_order_on_bar(
     if c is None:
         raise TypeError("match_order_on_bar(): required arg 'c' not provided (c=...).")
 
-    # Yön işareti
+    # YÃ¶n iÅŸareti
     sign = 1 if order.side == Side.BUY else -1
     q = sign * order.qty
 
-    # MARKET → Open
+    # MARKET â†’ Open
     if order.type == OrderType.MARKET:
         px = o * (1 + (slippage_bps / 1e4) * (1 if order.side == Side.BUY else -1))
         return Fill(
@@ -64,17 +63,17 @@ def match_order_on_bar(
                 price=px,
                 commission=_commission(px, order.qty, fees_bps),
             )
-        # IOC/FOK ise bar sonunda yoksa düşer
+        # IOC/FOK ise bar sonunda yoksa dÃ¼ÅŸer
         if order.tif in (TIF.IOC, TIF.FOK):
             return None
-        return None  # GTC: kuyrukta kalır
+        return None  # GTC: kuyrukta kalÄ±r
 
     # STOP (stop-market)
     if order.type == OrderType.STOP and order.stop_price is not None:
         S = order.stop_price
         triggered = (h >= S) if order.side == Side.BUY else (low <= S)
         if triggered:
-            # Gap koruması
+            # Gap korumasÄ±
             px = max(o, S) if order.side == Side.BUY else min(o, S)
             return Fill(
                 order_id=order.id,
@@ -95,10 +94,10 @@ def match_order_on_bar(
         S, L = order.stop_price, order.limit_price
         triggered = (h >= S) if order.side == Side.BUY else (low <= S)
         if not triggered:
-            # IOC/FOK ise tetiklenmediyse düşsün; GTC ise kuyrukta kalsın
+            # IOC/FOK ise tetiklenmediyse dÃ¼ÅŸsÃ¼n; GTC ise kuyrukta kalsÄ±n
             return None if order.tif in (TIF.IOC, TIF.FOK) else None
 
-        # Tetiklendiyse aynı barda limit şartına bak
+        # Tetiklendiyse aynÄ± barda limit ÅŸartÄ±na bak
         crossed = low <= L <= h
         if crossed:
             px = L

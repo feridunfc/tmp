@@ -1,0 +1,5 @@
+include README.md
+include LICENSE
+include src/algo5/py.typed
+global-include *.ini *.toml *.yml *.yaml
+recursive-include src/algo5 *.py

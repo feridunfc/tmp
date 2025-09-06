@@ -1,8 +1,10 @@
 ﻿from __future__ import annotations
+
 from math import sqrt
-from typing import List, Tuple
+
 import numpy as np
 import pandas as pd
+
 from .config import RiskConfig
 
 
@@ -33,8 +35,8 @@ class RiskEngine:
 
     def apply_stops(
         self, strategy_returns: pd.Series, price: pd.Series
-    ) -> Tuple[pd.Series, List[dict]]:
-        logs: List[dict] = []
+    ) -> tuple[pd.Series, list[dict]]:
+        logs: list[dict] = []
         sl = self.cfg.stop_loss_pct
         idx = price.index
         if not (self.cfg.enabled and sl and sl > 0):

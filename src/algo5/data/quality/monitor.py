@@ -1,7 +1,9 @@
 from dataclasses import dataclass
+
 import pandas as pd
-from ..validate import validate_ohlcv
+
 from ..integrity import df_checksum
+from ..validate import validate_ohlcv
 
 
 @dataclass

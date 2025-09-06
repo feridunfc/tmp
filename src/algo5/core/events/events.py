@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Optional
+
 import pandas as pd
-from algo5.engine.execution.models import Order, Fill
+
+from algo5.engine.execution.models import Fill, Order
 
 
 @dataclass(frozen=True)
@@ -33,7 +34,7 @@ class OrderAuthorized:
     """Riskten geçen emir."""
 
     order: Order
-    reason: Optional[str] = "approved"
+    reason: str | None = "approved"
 
 
 @dataclass(frozen=True)
@@ -71,4 +72,4 @@ class SystemHealth:
     timestamp: pd.Timestamp
     component: str
     status: str  # "HEALTHY", "WARNING", "ERROR"
-    message: Optional[str] = None
+    message: str | None = None
