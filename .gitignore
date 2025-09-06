@@ -40,3 +40,5 @@ ui/build/
 *.zip
 
 *.rar
+# local caches / scratch
+.pc_home/
