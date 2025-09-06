@@ -1,0 +1,5 @@
+﻿- chore: fix ruff B011 in tests; type-safe parse_structured_log (W7ÔåÆW8 polish) (2ded460)
+- style(risk): use built-in list over typing.List in RiskChain (f38206e)
+- chore: ignore local feature-store artifacts (543db4f)
+- chore: add final newline (pre-commit end-of-file-fixer) (5b19e72)
+- chore: drop unused algo2 tree (014c4da)
