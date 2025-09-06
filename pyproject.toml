@@ -33,12 +33,10 @@ exclude = '(^|/)(third_party|build|dist)(/|$)'
 module = ["algo5.metrics.metrics", "algo5.data.feature_store.store"]
 disable_error_code = ["unreachable"]
 
-
 [tool.pytest.ini_options]
 addopts = "-q -p no:cacheprovider --ignore=third_party"
 testpaths = ["tests"]
 norecursedirs = ["third_party", "build", "dist", ".git", ".venv*", "venv*", ".tox", ".mypy_cache", ".pytest_cache"]
-
 
 [tool.coverage.run]
 source = ["src"]
@@ -48,3 +46,5 @@ branch = true
 [tool.coverage.report]
 fail_under = 85
 show_missing = true
+precision = 2
+skip_empty = true
