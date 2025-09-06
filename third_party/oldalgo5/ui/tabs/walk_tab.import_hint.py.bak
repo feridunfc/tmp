@@ -1,0 +1,7 @@
+
+# ui/tabs/walk_tab.py (import kısmı için örnek)
+try:
+    from algo2.core.backtest.walkforward import run_walkforward  # algo2 sürümü
+except ImportError:
+    from algo3.core.backtest.walkforward import run_walkforward  # varsa algo3'e düş
+
