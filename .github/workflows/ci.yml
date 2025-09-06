@@ -2,49 +2,79 @@ name: ci
 
 on:
   push:
-    branches: [ main, "feature/**", "fix/**", "week-*/**" ]
+    branches: ['**']
+    paths-ignore:
+      - 'third_party/**'
+      - '**/*.md'
+      - '**/*.png'
+      - '**/*.jpg'
   pull_request:
     branches: [ main ]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - 'third_party/**'
+      - '**/*.md'
+      - '**/*.png'
+      - '**/*.jpg'
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    strategy:
+      matrix:
+        python-version: ['3.12']
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
-          cache: "pip"
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install tools & dev deps
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+      - name: Install deps
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          pip install pytest pytest-cov ruff black mypy pandas-stubs types-PyYAML types-python-dateutil
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          # fallback (repo dev toolchainı yoksa en azından test/linters çalışsın)
+          pip install pytest coverage ruff black mypy pandas numpy types-PyYAML types-python-dateutil pandas-stubs
+
+      - name: Lint (ruff)
+        run: ruff check .
+
+      - name: Format (black --check)
+        run: black --check .
+
+      - name: Typecheck (mypy)
+        run: mypy --config-file=pyproject.toml
+
+      - name: Test
+        env:
+          PYTHONPATH: src
+        run: pytest -q --ignore=third_party --maxfail=1 --disable-warnings
+
+      - name: Coverage XML (artifact)
+        if: always()
+        run: coverage xml -o coverage.xml || true
+
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage
+          path: coverage.xml
+          if-no-files-found: ignore
+
 
       - name: Lint
         run: |
           ruff check .
           black --check .
-          mypy --config-file pyproject.toml
-
-      - name: Test (ignore vendored)
-        env:
-          PYTHONPATH: src
-        run: pytest -q --ignore=third_party tests
-
-      - name: Coverage (xml)
-        if: always()
-        env:
-          PYTHONPATH: src
-        run: |
-          pytest --cov=src --cov-report=xml --ignore=third_party -q || true
-
-      - name: Upload coverage.xml
-        if: ${{ always() && hashFiles('coverage.xml') != '' }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage.xml
-          path: coverage.xml
+          mypy --config-file pyproject.toml src
