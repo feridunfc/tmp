@@ -42,3 +42,5 @@ ui/build/
 *.rar
 # local caches / scratch
 .pc_home/
+$env:PRE_COMMIT_HOME/*
+.pre-commit-home/
