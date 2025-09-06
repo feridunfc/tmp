@@ -44,3 +44,4 @@ ui/build/
 .pc_home/
 $env:PRE_COMMIT_HOME/*
 .pre-commit-home/
+.algo5_store/
