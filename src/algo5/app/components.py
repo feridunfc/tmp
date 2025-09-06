@@ -174,9 +174,7 @@ class PortfolioManager:
             self.realized_pnl += (f.price - self.entry_price) * abs(old_pos)
 
         if self.position != 0:
-            self.entry_price = (
-                (old_pos * self.entry_price) + (f.qty * f.price)
-            ) / self.position
+            self.entry_price = ((old_pos * self.entry_price) + (f.qty * f.price)) / self.position
         else:
             self.entry_price = 0.0
 

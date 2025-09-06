@@ -1,0 +1,3 @@
+[run]
+omit =
+    src/algo5/engine/execution/engine.py

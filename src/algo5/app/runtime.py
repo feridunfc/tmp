@@ -66,9 +66,7 @@ def main() -> None:
     bus, strat, risk, exe, pf = build_event_driven_app(initial_cash=10_000.0)
 
     def on_update(e: PortfolioUpdated, _bus) -> None:
-        print(
-            f"[{e.timestamp}] equity={e.equity:.2f} cash={e.cash:.2f} pos={e.position}"
-        )
+        print(f"[{e.timestamp}] equity={e.equity:.2f} cash={e.cash:.2f} pos={e.position}")
 
     bus.subscribe(PortfolioUpdated, on_update)
 

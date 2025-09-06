@@ -8,9 +8,7 @@ def test_validate_happy_path(demo_df):
 
 
 def test_rename_close_if_lowercase(demo_df):
-    df2, rep = validate_ohlcv(
-        demo_df.rename(columns={"Close": "close"}), raise_errors=False
-    )
+    df2, rep = validate_ohlcv(demo_df.rename(columns={"Close": "close"}), raise_errors=False)
     assert rep["renamed"].get("close") == "Close" and "Close" in df2.columns
 
 

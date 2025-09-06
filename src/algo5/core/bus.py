@@ -22,9 +22,7 @@ class EventBus:
             try:
                 h(event, self)
             except Exception:
-                log.exception(
-                    "handler %s failed for %s", h.__name__, type(event).__name__
-                )
+                log.exception("handler %s failed for %s", h.__name__, type(event).__name__)
 
     def publish_many(self, events: List[Any]) -> None:
         for e in events:

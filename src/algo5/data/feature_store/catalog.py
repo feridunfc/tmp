@@ -14,6 +14,4 @@ def list_items(namespace: str) -> List[str]:
     root = _cache.DEFAULT_CACHE_ROOT / namespace
     if not root.exists():
         return []
-    return sorted(
-        [p.stem for p in root.iterdir() if p.suffix in {".json", ".parquet", ".csv"}]
-    )
+    return sorted([p.stem for p in root.iterdir() if p.suffix in {".json", ".parquet", ".csv"}])
