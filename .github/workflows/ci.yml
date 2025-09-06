@@ -1,42 +1,50 @@
 name: ci
 
 on:
-  pull_request:
   push:
-    branches: [ main, "feature/**", "week-*/**" ]
-
-concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+    branches: [ main, "feature/**", "fix/**", "week-*/**" ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-          cache: pip
-          cache-dependency-path: |
-            pyproject.toml
-            requirements*.txt
+          cache: "pip"
 
-      - name: Install package + dev deps
+      - name: Install tools & dev deps
         run: |
-          python -m pip install -U pip
-          pip install -e ".[dev]"
-          pip install pytest pytest-cov pre-commit
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          pip install pytest pytest-cov ruff black mypy pandas-stubs types-PyYAML types-python-dateutil
 
-      - name: Pre-commit (ruff/black/mypy)
-        run: pre-commit run --all-files --show-diff-on-failure
+      - name: Lint
+        run: |
+          ruff check .
+          black --check .
+          mypy --config-file pyproject.toml
 
-      - name: Pytest (ignore vendored)
-        run: pytest -q --ignore=third_party --cov=src --cov-report=xml --cov-report=term-missing
+      - name: Test (ignore vendored)
+        env:
+          PYTHONPATH: src
+        run: pytest -q --ignore=third_party tests
+
+      - name: Coverage (xml)
+        if: always()
+        env:
+          PYTHONPATH: src
+        run: |
+          pytest --cov=src --cov-report=xml --ignore=third_party -q || true
 
       - name: Upload coverage.xml
+        if: ${{ always() && hashFiles('coverage.xml') != '' }}
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-xml
+          name: coverage.xml
           path: coverage.xml
