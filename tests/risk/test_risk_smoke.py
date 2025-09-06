@@ -5,7 +5,7 @@ from algo5.core.risk import RiskEngine, RiskConfig
 
 
 def test_sl_triggers_and_closes():
-    idx = pd.date_range("2024-01-01", periods=200, freq="H", tz="UTC")
+    idx = pd.date_range("2024-01-01", periods=200, freq="h", tz="UTC")
     price = pd.Series(np.r_[np.linspace(100, 110, 100), np.linspace(110, 90, 100)], index=idx)
     rets = price.pct_change().fillna(0.0)
     signal = pd.Series(1.0, index=idx)

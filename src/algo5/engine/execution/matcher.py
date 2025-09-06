@@ -1,4 +1,5 @@
 ﻿from __future__ import annotations
+from .trailing_oco import wrap_matcher as _algo5_wrap  # noqa: E402
 
 from algo5.engine.execution.models import TIF, Fill, Order, OrderType, Side
 
@@ -110,3 +111,9 @@ def match_order_on_bar(  # noqa: C901
         return None
 
     return None
+
+
+# -- Trailing/OCO wrapper activation --
+if "_ALGO5_TRAIL_OCO_PATCHED" not in globals():
+    match_order_on_bar = _algo5_wrap(match_order_on_bar)
+    _ALGO5_TRAIL_OCO_PATCHED = True

@@ -1,4 +1,4 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from dataclasses import dataclass, field
 
@@ -61,7 +61,7 @@ class PaperGateway:
             else:
                 remaining.append(order)
 
-        # Filled olmayanlar kuyrukta kalsÄ±n
+        # Filled olmayanlar kuyrukta kalsÃ„Â±n
         self.orders = remaining
 
         # Filleri hesap/pozisyona uygula
@@ -71,7 +71,7 @@ class PaperGateway:
         return fills
 
     def _apply_fill(self, f: Fill) -> None:
-        """Fill'i uygula: nakit ve pozisyonu gÃ¼ncelle, iÅŸlemi kaydet."""
+        """Fill'i uygula: nakit ve pozisyonu gÃƒÂ¼ncelle, iÃ…Å¸lemi kaydet."""
         commission = getattr(f, "commission", 0.0) or 0.0
         self.cash -= f.qty * f.price + commission
         self.position += f.qty
@@ -87,3 +87,25 @@ class PaperGateway:
             "pos": self.position,
             "equity": self.equity(last_price),
         }
+
+
+# === OCO sibling-cancel after fill (algo5) ===
+def _algo5_cancel_oco_in_queue(self, cancel_oco_id) -> None:
+    if not cancel_oco_id:
+        return
+    qs = getattr(self, "orders", None)
+    if qs is None:
+        return
+    # kalan bekleyen emirlerden aynı oco_id'li kardeşleri sil
+    self.orders = [o for o in qs if getattr(o, "oco_id", None) != cancel_oco_id]
+
+
+if "PaperGateway" in globals() and hasattr(PaperGateway, "_apply_fill"):
+    _algo5_orig_apply_fill = PaperGateway._apply_fill
+
+    def _algo5_wrapped_apply_fill(self, fill):
+        _algo5_orig_apply_fill(self, fill)
+        cancel_oco_id = getattr(fill, "cancel_oco_id", None)
+        _algo5_cancel_oco_in_queue(self, cancel_oco_id)
+
+    PaperGateway._apply_fill = _algo5_wrapped_apply_fill  # type: ignore[method-assign]
