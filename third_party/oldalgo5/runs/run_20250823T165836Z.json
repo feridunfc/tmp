@@ -1,0 +1,25 @@
+{
+  "symbol": "BTC/USDT",
+  "strategy": "sma_crossover",
+  "params": {
+    "fast": 10,
+    "slow": 30
+  },
+  "fees": {
+    "commission_bps": 5.0,
+    "slippage_bps": 10.0
+  },
+  "metrics": {
+    "total_return": 0.03378871544175155,
+    "sharpe": 0.42902918169201515,
+    "max_drawdown": 0.04798420033785211,
+    "calmar": 0.7041633538508191
+  },
+  "overlays": {
+    "use_sent": false,
+    "use_anom": false,
+    "sent_mode": "filter",
+    "sent_min": 0.1,
+    "sent_scale": 0.5
+  }
+}

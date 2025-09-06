@@ -1,0 +1,97 @@
+from __future__ import annotations
+import streamlit as st
+import pandas as pd
+
+from ui.common.services import get_active_df, normalize_ohlcv, ensure_risk_engine, build_risk_ui
+from ui.common.components import plot_equity
+
+try:
+    from algo2.core.backtest.engine import BacktestEngine, FeesConfig
+    from algo2.core.strategies.registry import list_strategies, get_strategy
+except Exception:
+    BacktestEngine = None
+    FeesConfig = None
+    def list_strategies(): return ["ma_crossover"]
+    def get_strategy(name: str, **params):
+        class _S:
+            @staticmethod
+            def param_schema():
+                return [
+                    {"name":"fast","type":"int","default":20,"min":5,"max":200,"step":1},
+                    {"name":"slow","type":"int","default":50,"min":10,"max":300,"step":1},
+                ]
+            def prepare(self, df): return df
+            def generate_signals(self, df):
+                f = int(params.get("fast",20)); s = int(params.get("slow",50))
+                fast = df["close"].rolling(f).mean()
+                slow = df["close"].rolling(s).mean()
+                return (fast > slow).astype(int).replace(0,-1)
+        return _S()
+
+def _schema_to_params(schema):
+    params = {}
+    for f in schema or []:
+        if not isinstance(f, dict): continue
+        name = f.get("name","param"); ftype = f.get("type","int").lower()
+        key = f"single_{name}"
+        if ftype in ("int","integer"):
+            params[name] = st.number_input(name, int(f.get("min",1)), int(f.get("max",1000)), int(f.get("default",1)), int(f.get("step",1)), key=key)
+        elif ftype in ("float","double"):
+            params[name] = st.number_input(name, float(f.get("min",0.0)), float(f.get("max",1e9)), float(f.get("default",0.0)), float(f.get("step",0.01)), key=key)
+        elif ftype in ("select","choice","enum"):
+            opts = f.get("options") or []
+            idx = 0
+            if f.get("default") in opts: idx = opts.index(f.get("default"))
+            params[name] = st.selectbox(name, opts, index=idx, key=key)
+        elif ftype in ("bool","boolean"):
+            params[name] = st.checkbox(name, value=bool(f.get("default", False)), key=key)
+        else:
+            params[name] = st.text_input(name, value=str(f.get("default","")), key=key)
+    return params
+
+def render(ctx):
+    st.subheader("🧪 Tek Strateji Backtest")
+
+    with st.form("single_form"):
+        all_strats = list_strategies() or ["ma_crossover"]
+        sel = st.selectbox("Strateji", all_strats, index=0, key="single_select")
+        risk_cfg = build_risk_ui(prefix="single_risk")
+        run_btn = st.form_submit_button("Backtest'i Çalıştır", type="primary", width='stretch')
+
+    if not run_btn:
+        return
+
+    df = normalize_ohlcv(get_active_df())
+    proto = get_strategy(sel)
+    schema = []
+    if hasattr(proto, "param_schema"):
+        try: schema = proto.param_schema()
+        except Exception: schema = []
+    with st.expander("Parametreler", expanded=True):
+        params = _schema_to_params(schema)
+
+    fees = None
+    if FeesConfig is not None:
+        fees = FeesConfig(commission_bps=getattr(ctx, "commission_bps", 0.0), slippage_bps=getattr(ctx, "slippage_bps", 0.0))
+    strat = get_strategy(sel, **params)
+    pre = strat.prepare(df) if hasattr(strat, "prepare") else df
+    sig = strat.generate_signals(pre)
+
+    if BacktestEngine is not None and fees is not None:
+        eng = BacktestEngine(fees_config=fees, risk_engine=ensure_risk_engine(risk_cfg))
+        out = eng.run_backtest(pre, sig)
+        eq = out.get("equity", None)
+        met = out.get("metrics", {})
+    else:
+        rets = pre["close"].pct_change().fillna(0.0)
+        pos = sig.shift(1).fillna(0.0)
+        eq = (1 + rets * pos).cumprod()
+        met = {
+            "total_return": float(eq.iloc[-1] - 1.0),
+            "sharpe": float((rets * pos).mean() / ((rets * pos).std() + 1e-12) * (252 ** 0.5)),
+            "max_drawdown": float((eq/eq.cummax() - 1.0).min()),
+        }
+
+    st.write("**Metrikler**")
+    st.json(met)
+    plot_equity(eq, name=f"Equity - {sel}")

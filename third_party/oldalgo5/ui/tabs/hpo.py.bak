@@ -1,0 +1,116 @@
+from __future__ import annotations
+import streamlit as st
+import pandas as pd
+
+from ui.common.services import get_active_df, normalize_ohlcv
+from ui.common.components import plot_histogram
+
+try:
+    import optuna
+except Exception:
+    optuna = None
+
+try:
+    from algo2.core.backtest.engine import BacktestEngine, FeesConfig
+    from algo2.core.strategies.registry import list_strategies, get_strategy
+except Exception:
+    BacktestEngine = None
+    FeesConfig = None
+    def list_strategies(): return ["ma_crossover"]
+    def get_strategy(name: str, **params):
+        class _S:
+            @staticmethod
+            def param_schema():
+                return [
+                    {"name":"fast","type":"int","default":20,"min":5,"max":200,"step":1},
+                    {"name":"slow","type":"int","default":50,"min":10,"max":300,"step":1},
+                ]
+            def prepare(self, df): return df
+            def generate_signals(self, df):
+                f = int(params.get("fast",20)); s = int(params.get("slow",50))
+                fast = df["close"].rolling(f).mean()
+                slow = df["close"].rolling(s).mean()
+                return (fast > slow).astype(int).replace(0,-1)
+        return _S()
+
+def _suggest(trial, f):
+    name = str(f.get("name","param"))
+    ftype = str(f.get("type","int")).lower()
+    if ftype in ("int","integer"):
+        return trial.suggest_int(name, int(f.get("min",1)), int(f.get("max",100)), step=int(f.get("step",1)))
+    if ftype in ("float","double"):
+        low = float(f.get("min",0.0)); high = float(f.get("max",1.0))
+        if f.get("log", False):
+            low = max(low, 1e-6)
+            return trial.suggest_float(name, low, high, log=True)
+        return trial.suggest_float(name, low, high)
+    if ftype in ("select","choice","enum"):
+        opts = f.get("options") or []
+        return trial.suggest_categorical(name, opts)
+    if ftype in ("bool","boolean"):
+        return trial.suggest_categorical(name, [True, False])
+    return f.get("default")
+
+def render(ctx):
+    st.subheader("🔎 Hiperparametre Optimizasyonu (HPO)")
+
+    if optuna is None:
+        st.warning("Optuna bulunamadı. `pip install optuna` ile kurabilirsiniz.")
+        return
+
+    all_strats = list_strategies() or ["ma_crossover"]
+
+    with st.form("hpo_form"):
+        sel = st.selectbox("Strateji", all_strats, index=0, key="hpo_strat")
+        metric = st.selectbox("Optimize Edilecek Metrik", ["sharpe", "total_return", "max_drawdown"], index=0, key="hpo_metric")
+        direction = st.selectbox("Yön", ["maximize", "minimize"], index=0, key="hpo_dir")
+        n_trials = st.number_input("Deneme Sayısı", 1, 500, 20, 1, key="hpo_ntrials")
+        run_btn = st.form_submit_button("HPO Başlat", type="primary", width='stretch')
+
+    if not run_btn:
+        return
+
+    df = normalize_ohlcv(get_active_df())
+    proto = get_strategy(sel)
+    schema = []
+    if hasattr(proto, "param_schema"):
+        try: schema = proto.param_schema()
+        except Exception: schema = []
+    fields = [f for f in (schema or []) if isinstance(f, dict)]
+
+    fees = None
+    if FeesConfig is not None:
+        fees = FeesConfig(commission_bps=getattr(ctx, "commission_bps", 0.0), slippage_bps=getattr(ctx, "slippage_bps", 0.0))
+
+    def objective(trial: "optuna.trial.Trial"):
+        params = {}
+        for f in fields:
+            params[str(f.get("name","param"))] = _suggest(trial, f)
+
+        strat = get_strategy(sel, **params)
+        pre = strat.prepare(df) if hasattr(strat, "prepare") else df
+        sig = strat.generate_signals(pre)
+
+        if BacktestEngine is not None and FeesConfig is not None:
+            eng = BacktestEngine(fees_config=fees, risk_engine=None)
+            out = eng.run_backtest(pre, sig)
+            m = out.get("metrics", {})
+        else:
+            rets = pre["close"].pct_change().fillna(0.0)
+            pos = sig.shift(1).fillna(0.0)
+            eq = (1 + rets * pos).cumprod()
+            m = {
+                "total_return": float(eq.iloc[-1] - 1.0),
+                "sharpe": float((rets * pos).mean() / ((rets * pos).std() + 1e-12) * (252 ** 0.5)),
+                "max_drawdown": float((eq/eq.cummax() - 1.0).min()),
+            }
+        return float(m.get(metric, 0.0))
+
+    study = optuna.create_study(direction=direction)
+    study.optimize(objective, n_trials=int(n_trials))
+
+    st.success("HPO tamamlandı.")
+    st.json({"best_value": study.best_value, "best_params": study.best_params})
+
+    vals = [t.value for t in study.trials if t.value is not None]
+    plot_histogram(vals, title=f"{metric} dağılımı", bins=40, key="hpo_hist")

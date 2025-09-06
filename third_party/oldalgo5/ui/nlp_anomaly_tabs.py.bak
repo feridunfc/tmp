@@ -1,0 +1,43 @@
+# ui/nlp_anomaly_tabs.py
+from __future__ import annotations
+import numpy as np
+import pandas as pd
+import streamlit as st
+import plotly.graph_objects as go
+
+from algo2.nlp.sentiment import proxy_sentiment_from_price, make_sentiment_features
+from algo2.anomaly.zscore_detector import ZScoreDetector, ZScoreParams
+
+def create_nlp_tab(price: pd.Series):
+    st.header("📰 NLP & Sentiment (Beta)")
+    st.caption("Ek kütüphane gerektirmeden fiyat-temelli bir sentiment proxy gösterilir. VADER varsa otomatik zenginleşir.")
+
+    sent = proxy_sentiment_from_price(price)
+    feats = make_sentiment_features(sent)
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Son Sentiment", f"{float(sent.iloc[-1]):+.3f}")
+    c2.metric("MA(10)", f"{float(feats['sent_ma_10'].iloc[-1]):+.3f}")
+    c3.metric("Std(10)", f"{float(feats['sent_std_10'].iloc[-1]):.3f}")
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=sent.index, y=sent.values, name="Sentiment", mode="lines"))
+    fig.update_layout(height=300, margin=dict(l=8, r=8, t=8, b=8))
+    st.plotly_chart(fig, width='stretch')
+
+def create_anomaly_tab(price: pd.Series):
+    st.header("⚠️ Anomali Tespiti (Beta)")
+    thr = st.slider("Z-score Eşiği", 2.0, 6.0, 3.0, 0.5, key="z_thr")
+    det = ZScoreDetector(ZScoreParams(lookback=50, threshold=float(thr)))
+    mask = det.detect(price)
+
+    st.write(f"Tespit edilen anomali sayısı: **{int(mask.sum())}**")
+
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(x=price.index, y=price.values, name="Price", mode="lines"))
+    # Anomali noktalarını işaretle
+    pts_x = price.index[mask]
+    pts_y = price[mask]
+    fig.add_trace(go.Scatter(x=pts_x, y=pts_y, mode="markers", name="Anomaly"))
+    fig.update_layout(height=320, margin=dict(l=8, r=8, t=8, b=8))
+    st.plotly_chart(fig, width='stretch')

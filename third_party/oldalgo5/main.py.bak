@@ -1,0 +1,58 @@
+from __future__ import annotations
+import asyncio
+import pandas as pd
+from datetime import datetime, timedelta
+from src.algo2.events.bus import EventBus, start_health_server
+from src.algo2.core.engine.signal_generator import Signal, SignalGenerator
+from src.algo2.core.execution.live_execution import LiveExecutionEngine
+from src.algo2.core.execution.paper_gateway import PaperGateway
+from src.algo2.core.portfolio.advanced_manager import AdvancedPortfolioManager
+from src.algo2.data.feeds.websocket_feed import replay_dataframe
+from src.algo2.events.domain import MarketDataEvent
+
+def demo_df(n=200):
+    idx = pd.date_range(end=pd.Timestamp.utcnow(), periods=n, freq="1min", tz="UTC")
+    px = 100 + pd.Series(range(n), index=idx).astype(float).rolling(5, min_periods=1).mean()
+    df = pd.DataFrame({
+        "open": px.values,
+        "high": (px + 0.2).values,
+        "low": (px - 0.2).values,
+        "close": (px + 0.1).values,
+        "volume": 1000
+    }, index=idx)
+    return df
+
+async def main():
+    start_health_server(8000)
+    bus = EventBus()
+    gateway = PaperGateway()
+    port = AdvancedPortfolioManager(bus, initial_capital=100_000.0)
+
+    # update gateway last price on market events
+    def on_market(e: MarketDataEvent):
+        gateway.update_price(e.data.get("symbol","BTCUSDT"), float(e.data.get("close",0.0)))
+    bus.subscribe(MarketDataEvent, on_market)
+
+    exec_engine = LiveExecutionEngine(bus, gateway=gateway)
+    siggen = SignalGenerator(bus)
+
+    # very naive crossover-like tick signal
+    from collections import deque
+    q = deque(maxlen=5)
+    def strat(e: MarketDataEvent):
+        px = float(e.data.get("close", 0.0))
+        q.append(px)
+        if len(q) < 5: return []
+        ma = sum(q)/len(q)
+        direction = 1 if px > ma else -1
+        s = Signal(symbol=e.data.get("symbol","BTCUSDT"),
+                   strength=0.1, direction=direction,
+                   timestamp=e.timestamp, source="demo", metadata={"ma":ma,"px":px})
+        return [s]
+    siggen.register("demo_strat", strat)
+
+    df = demo_df(300)
+    await replay_dataframe(bus, df, symbol="BTCUSDT", speed=0.0)
+
+if __name__ == "__main__":
+    asyncio.run(main())

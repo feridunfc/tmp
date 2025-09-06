@@ -1,0 +1,19 @@
+from algo2.utils.data import demo_ohlcv, normalize_ohlcv
+from algo2.core.strategies.registry_ext import create, list_strategies
+from algo2.core.backtest.advanced_engine import AdvancedBacktestEngine
+
+def main():
+    print("Available strategies:", list_strategies())
+    df = normalize_ohlcv(demo_ohlcv(600))
+    strat = create("hybrid_ensemble", fast_period=20, slow_period=50,
+                   meta_threshold=0.6, min_confidence=0.45)
+    prepared = strat.prepare(df)
+    sig = strat.generate_signals(prepared)
+    eng = AdvancedBacktestEngine(initial_capital=50_000, commission_bps=10, slippage_bps=5)
+    out = eng.run_backtest(prepared, sig, symbol="DEMO")
+    print("Metrics:", out["metrics"])
+    print("Trades:", len(out["trades"])) 
+    print("Equity last:", out["equity"].iloc[-1])
+
+if __name__ == "__main__":
+    main()
