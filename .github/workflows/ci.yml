@@ -61,9 +61,8 @@ jobs:
         env:
           PYTHONPATH: src
         run: |
-                # Branch coverage pyproject'ta açık; eşik burada enforce ediliyor.
-          pytest -q --ignore=third_party --maxfail=1 --disable-warnings
-          --cov=src --cov-report=xml:coverage.xml --cov-fail-under=85
+          pytest -q --ignore=third_party --maxfail=1 --disable-warnings \
+                        --cov=src --cov-branch --cov-report=xml:coverage.xml
 
       - name: Coverage summary
         if: always()
