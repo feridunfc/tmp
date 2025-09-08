@@ -276,3 +276,45 @@ flowchart LR
 - src/algo5/robustness/mc_stress.py – MC path & VaR/CVaR
 
 ---
+
+## Snapshot - 2025-09-08
+
+### 1) Modül Durumu (Bizde)
+| Modül | Bizdeki Durum | Yorum |
+|---|---|---|
+| Event Bus | src/algo5/core/eventbus.py (basit) | Temel var; Kafka/Redis ile genişlet |
+| Veri Katmanı | provider.py, loaders/, feature_store.py | Var; normalize + checksum eksik |
+| TA Özellikler | ta_features.py (rolling, lag) | Var; micro-structure yok |
+| AI Model | ai_unified.py (RF) | Sadece RF; XGB/LGBM/NN yok |
+| Risk Chain | risk/rules.py (SL/TP/MaxDD) | Var; Kelly/VolTarget/VaR/Drawdown yok |
+| Backtest | walkforward.py (WF) | Var; 1-bar delay var; MC/stress yok |
+| UI (Streamlit) | ui/tabs/(Data, Train, Run, Compare) | Var; hata paneli + CSV export eksik |
+| Registry | STRATEGY_REGISTRY | Boş; doldurulmalı |
+
+### 2) Taslakta Var – Bizde Yok (Öncelik)
+| Eksik Bileşen | Öncelik | Açıklama |
+|---|:---:|---|
+| Micro-structure (LOB imbalance, VPIN) | 🔴 | Kısa-vadeli edge; code-ready |
+| Kelly / Vol-target / VaR | 🔴 | Pozisyon boyutlama |
+| XGB/LGBM/NN/RL | 🔴 | Model çeşitliliği |
+| Monte-Carlo / Stress | 🟡 | Robustness |
+| Sentiment (NLP) | 🟡 | Haber/Twitter |
+| On-chain (whale) | 🟡 | Kripto-alpha |
+| Live Kill-Switch | 🔴 | Canlı risk |
+| Compare CSV export | 🟢 | UI kolaylık |
+
+### 3) Hemen Açılacak 5 PR
+| PR | Eksik | Tahmini Gün |
+|---|---|---|
+| PR-A | XGBStrategy + LGBMStrategy (registry doldur) | 1 |
+| PR-B | KellyPositionSizer + VolTargetRule | 1 |
+| PR-C | MonteCarloStress (1000 path, VaR/CVaR) | 1 |
+| PR-D | MicrostructureFeatures (VPIN, OB imbalance) | 1 |
+| PR-E | CompareTab CSV Export + UI Error Panel | 0.5 |
+
+### 4) Kod İskelet Referansları
+- src/algo5/risk/kelly_sizer.py – Kelly sizing yardımcıları
+- src/algo5/features/microstructure.py – VPIN / OB imbalance proxy
+- src/algo5/robustness/mc_stress.py – MC path & VaR/CVaR
+
+---
