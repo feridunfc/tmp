@@ -1,4 +1,4 @@
-﻿def test_oco_parent_fill_triggers_sl_tp():
+def test_oco_parent_fill_triggers_sl_tp():
     assert True
 
 

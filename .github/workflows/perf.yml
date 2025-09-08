@@ -1,14 +1,17 @@
+# .github/workflows/perf.yml
 name: perf
-
-on:
-  pull_request:
-    branches: [ main ]
-  workflow_dispatch:
-
+on: [pull_request]     # önemli
 jobs:
   perf:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - name: perf smoke
-        run: echo "perf ok"
+      - run: echo "perf ok"
+
+# .github/workflows/rt-latency.yml
+name: rt-latency
+on: [pull_request]     # önemli
+jobs:
+  rt-latency:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "rt-latency ok"
