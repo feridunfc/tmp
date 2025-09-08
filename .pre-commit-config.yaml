@@ -37,6 +37,13 @@ repos:
       - id: pytest-wrapper
         name: Run pytest with coverage (pre-push)
         language: system
-        entry: python precommit_pytest.py
-        pass_filenames: false
-        stages: [pre-push]
+        entry: python -m pytest
+        args:
+          - -q
+          - --ignore=third_party
+          - --maxfail=1
+          - --disable-warnings
+          - --cov=src
+          - --cov-branch
+          - --cov-report=xml:coverage.xml
+        stages: [push]
