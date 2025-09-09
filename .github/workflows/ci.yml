@@ -9,6 +9,8 @@ jobs:
   test:
     name: test (3.12)
     runs-on: ubuntu-latest
+    env:
+      PYTHONPATH: src
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -30,14 +32,9 @@ jobs:
           COV_MIN: 79.5
           BRANCH_MIN: 50
         run: |
-          pytest -q --ignore=third_party --maxfail=1 --disable-warnings `
-            --cov=src --cov-branch --cov-report=xml:coverage.xml `
+          pytest -q --ignore=third_party --maxfail=1 --disable-warnings \
+            --cov=src --cov-branch --cov-report=xml:coverage.xml \
             --cov-fail-under=${{ env.COV_MIN }}
-
-      - name: Generate coverage badge (SVG)
-        run: |
-          mkdir -p .github/badges
-          genbadge coverage -i coverage.xml -o .github/badges/coverage.svg
 
       - name: Upload coverage.xml
         uses: actions/upload-artifact@v4
@@ -45,12 +42,16 @@ jobs:
           name: coverage.xml
           path: coverage.xml
 
+      - name: Generate coverage badge (SVG)
+        run: |
+          mkdir -p .github/badges
+          genbadge coverage -i coverage.xml -o .github/badges/coverage.svg
+
       - name: Upload coverage badge
         uses: actions/upload-artifact@v4
         with:
           name: coverage-badge
           path: .github/badges/coverage.svg
 "@
-
 $utf8NoBom = New-Object System.Text.UTF8Encoding($false)
 [System.IO.File]::WriteAllText(".github/workflows/ci.yml", $ci, $utf8NoBom)
