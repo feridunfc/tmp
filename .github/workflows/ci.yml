@@ -1,1 +1,94 @@
+$path = ".github/workflows/ci.yml"
+$yml = @"
 name: ci
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+env:
+  COV_MIN: 79.5
+  BRANCH_MIN: 50
+
+jobs:
+  test:
+    name: test (3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install deps
+        run: |
+          python -m pip install -U pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+          pip install pytest pytest-cov mypy ruff black "genbadge[coverage]"
+
+      - name: Typecheck (mypy)
+        run: mypy
+
+      - name: Test + Coverage
+        env:
+          PYTHONPATH: src
+        run: |
+          pytest -q --ignore=third_party --maxfail=1 --disable-warnings \
+                 --cov=src --cov-branch --cov-report=xml:coverage.xml \
+                 --cov-fail-under=${{ env.COV_MIN }}
+
+      - name: Coverage summary (outputs + step summary)
+        run: |
+          python - <<'PY' > summary.md
+          import os, xml.etree.ElementTree as ET
+          r = ET.parse('coverage.xml').getroot()
+          line = float(r.attrib.get('line-rate', 0))*100
+          branch = float(r.attrib.get('branch-rate', 0))*100
+          print("# Coverage")
+          print(f"- Line: {line:.2f}%")
+          print(f"- Branch: {branch:.2f}%")
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"line={line:.2f}\n")
+              f.write(f"branch={branch:.2f}\n")
+          PY
+          cat summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Enforce branch coverage threshold
+        run: |
+          python - <<'PY'
+          import os, sys, xml.etree.ElementTree as ET
+          branch_min = float(os.environ.get("BRANCH_MIN", "0"))
+          r = ET.parse('coverage.xml').getroot()
+          branch = float(r.attrib.get('branch-rate', 0))*100
+          print(f"Branch: {branch:.2f}% (min {branch_min:.2f}%)")
+          if branch < branch_min:
+              print(f"::error::Branch coverage {branch:.2f}% is below threshold {branch_min:.2f}%")
+              sys.exit(1)
+          PY
+
+      - name: Upload coverage.xml
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage.xml
+          path: coverage.xml
+
+      - name: Generate coverage badge (SVG)
+        run: |
+          python -m pip install "genbadge[coverage]"
+          mkdir -p .github/badges
+          genbadge coverage -i coverage.xml -o .github/badges/coverage.svg
+
+      - name: Upload coverage badge
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badge
+          path: .github/badges/coverage.svg
+"@
+$utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+[System.IO.File]::WriteAllText($path, $yml, $utf8NoBom)
+
+# hızlı doğrulama
+(Get-Content $path -Raw | Select-String -Pattern '^(name:|on:|  workflow_dispatch:)' -AllMatches -CaseSensitive).Matches.Value
