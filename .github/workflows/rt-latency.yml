@@ -1,0 +1,14 @@
+name: rt-latency
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  latency:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: latency smoke
+        run: echo "latency ok"

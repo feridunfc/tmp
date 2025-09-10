@@ -45,3 +45,6 @@ ui/build/
 $env:PRE_COMMIT_HOME/*
 .pre-commit-home/
 .algo5_store/
+artifacts/
+
+artifacts/
