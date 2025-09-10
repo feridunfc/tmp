@@ -48,3 +48,9 @@ $env:PRE_COMMIT_HOME/*
 artifacts/
 
 artifacts/
+
+# local artifacts
+*.log
+*.sqlite
+*.db
+src/**/db/*.db
