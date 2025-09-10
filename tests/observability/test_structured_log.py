@@ -1,4 +1,4 @@
-﻿import json
+import json
 
 from algo5.core.observability import structured_log, parse_structured_log
 

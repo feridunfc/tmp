@@ -1,4 +1,4 @@
-﻿import pandas as pd
+import pandas as pd
 
 from algo5.metrics.metrics import compute_metrics, compute_nav
 
