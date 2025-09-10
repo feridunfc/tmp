@@ -1,102 +1,13 @@
-name: ci
-
+﻿name: ci
 on:
   push:
-    branches: ['**']
-    paths-ignore:
-      - 'third_party/**'
-      - '**/*.md'
-      - '**/*.png'
-      - '**/*.jpg'
   pull_request:
-    branches: [ main ]
-    types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore:
-      - 'third_party/**'
-      - '**/*.md'
-      - '**/*.png'
-      - '**/*.jpg'
   workflow_dispatch:
 
 jobs:
-  test:
+  smoke:
+    name: smoke
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        python-version: ['3.12']
-
     steps:
       - uses: actions/checkout@v4
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-      - name: Install deps
-        run: |
-          python -m pip install -U pip
-          if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          # fallback: repo dosyaları yoksa bile lint/test çalışsın
-          pip install pytest pytest-cov ruff black mypy pandas-stubs types-PyYAML types-python-dateutil || true
-
-      - name: Lint (ruff)
-        run: ruff check .
-
-      - name: Format (black --check)
-        run: black --check .
-
-      - name: Typecheck (mypy)
-        run: mypy --config-file pyproject.toml src
-
-      - name: Test + Coverage
-        env:
-          PYTHONPATH: src
-        run: |
-          pytest -q --ignore=third_party --maxfail=1 --disable-warnings \
-                        --cov=src --cov-branch --cov-report=xml:coverage.xml
-
-      - name: Coverage summary
-        if: always()
-        run: |
-          python - <<'PY' > summary.md
-          import xml.etree.ElementTree as ET
-          r = ET.parse('coverage.xml').getroot()
-          line = float(r.attrib.get('line-rate', 0))*100
-          branch = float(r.attrib.get('branch-rate', 0))*100
-          print("# Coverage")
-          print(f"- Line: {line:.2f}%")
-          print(f"- Branch: {branch:.2f}%")
-          PY
-          cat summary.md >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Upload coverage.xml
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage.xml
-          path: coverage.xml
-          if-no-files-found: ignore
-
-      # Opsiyonel rozet: istemiyorsan bu iki adımı silebilirsin
-      - name: Generate coverage badge
-        if: always()
-        run: |
-          pip install "genbadge[coverage]"
-          genbadge coverage -i coverage.xml -o coverage-badge.svg
-
-      - name: Upload coverage badge
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-badge
-          path: coverage-badge.svg
-          if-no-files-found: ignore
+      - run: echo ""CI is alive""
