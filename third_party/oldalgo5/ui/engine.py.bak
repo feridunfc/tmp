@@ -1,0 +1,14 @@
+# ui/engine.py
+# Backward-compat shim for old imports: `from ui.engine import ...`
+from algo2.core.backtest.engine import BacktestEngine, FeesConfig
+from algo2.core.risk.engine import RiskEngine
+from algo2.core.risk.config import RiskConfig
+from algo2.core.data import normalize_ohlcv
+
+__all__ = [
+    "BacktestEngine",
+    "FeesConfig",
+    "RiskEngine",
+    "RiskConfig",
+    "normalize_ohlcv",
+]

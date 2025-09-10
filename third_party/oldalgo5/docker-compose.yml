@@ -1,0 +1,32 @@
+version: '3.8'
+services:
+  algo2:
+    build: .
+    ports: ["8000:8000", "8501:8501"]
+    environment:
+      - DATABASE_URL=postgresql://timescale:password@timescale:5432/algo2
+    depends_on: [redis, timescale, prometheus]
+  redis:
+    image: redis:alpine
+    ports: ["6379:6379"]
+  timescale:
+    image: timescale/timescaledb:latest-pg14
+    environment:
+      - POSTGRES_DB=algo2
+      - POSTGRES_USER=timescale
+      - POSTGRES_PASSWORD=password
+    ports: ["5432:5432"]
+    volumes:
+      - timescale_data:/var/lib/postgresql/data
+  prometheus:
+    image: prom/prometheus:latest
+    ports: ["9090:9090"]
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+  grafana:
+    image: grafana/grafana:latest
+    ports: ["3000:3000"]
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+volumes:
+  timescale_data:

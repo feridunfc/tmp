@@ -5,12 +5,14 @@ build-backend = "setuptools.build_meta"
 [tool.black]
 line-length = 100
 target-version = ["py312"]
+extend-exclude = '(^|/)(third_party|build|dist)/'
 
 [tool.ruff]
 line-length = 100
+extend-exclude = ["third_party/", "build/", "dist/"]
 
 [tool.ruff.lint]
-select = ["E","F","B","UP","SIM","C90"]
+select = ["E", "F", "B", "UP", "SIM", "C90"]
 ignore = []
 
 [tool.mypy]
@@ -24,11 +26,25 @@ warn_unused_ignores = true
 warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
-exclude = ["build/","dist/"]
-
-[tool.pytest.ini_options]
-addopts = "-q -p no:cacheprovider"
+# regex: vendor ve build çıktıları hariç
+exclude = '(^|/)(third_party|build|dist)(/|$)'
 
 [[tool.mypy.overrides]]
 module = ["algo5.metrics.metrics", "algo5.data.feature_store.store"]
 disable_error_code = ["unreachable"]
+
+[tool.pytest.ini_options]
+addopts = "-q -p no:cacheprovider --ignore=third_party"
+testpaths = ["tests"]
+norecursedirs = ["third_party", "build", "dist", ".git", ".venv*", "venv*", ".tox", ".mypy_cache", ".pytest_cache"]
+
+[tool.coverage.run]
+source = ["src"]
+omit = ["third_party/*"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+precision = 2
+skip_empty = true

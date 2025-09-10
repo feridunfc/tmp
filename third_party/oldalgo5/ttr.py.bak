@@ -1,0 +1,67 @@
+#!/usr/bin/env python3
+"""
+Temizleme: algo2 / algo3 importlarını src.* ile değiştirir.
+- Sadece .py dosyalarında çalışır
+- import satırları ve importlib.import_module stringlerini hedefler
+- Güvenli yedek oluşturur: *.bak
+"""
+from __future__ import annotations
+import os, re, sys
+
+ROOT = sys.argv[1] if len(sys.argv) > 1 else "."
+EXCLUDE_DIRS = {".git", ".venv", "venv", "__pycache__", ".mypy_cache", ".ruff_cache", ".pytest_cache"}
+
+# (pattern, replacement) çiftleri — sırayla uygulanır
+RULES = [
+    # 1) 'from src.algo2.core.x import Y' → 'from src.core.x import Y'
+    (r"(^\s*from\s+)src\.algo2\.(core|features|strategies|risk|engine|backtest|data|anomaly)\.", r"\1src.\2."),
+    (r"(^\s*from\s+)src\.algo3\.(core|features|strategies|risk|engine|backtest|data|anomaly)\.", r"\1src.\2."),
+    # 2) 'from algo2.core.x import Y' → 'from src.core.x import Y'
+    (r"(^\s*from\s+)algo2\.(core|features|strategies|risk|engine|backtest|data|anomaly)\.", r"\1src.\2."),
+    (r"(^\s*from\s+)algo3\.(core|features|strategies|risk|engine|backtest|data|anomaly)\.", r"\1src.\2."),
+    # 3) 'import src.algo2.core.x as z' → 'import src.core.x as z'
+    (r"(^\s*import\s+)src\.algo2\.(core|features|strategies|risk|engine|backtest|data|anomaly)\.", r"\1src.\2."),
+    (r"(^\s*import\s+)src\.algo3\.(core|features|strategies|risk|engine|backtest|data|anomaly)\.", r"\1src.\2."),
+    # 4) 'import algo2.core.x as z' → 'import src.core.x as z'
+    (r"(^\s*import\s+)algo2\.(core|features|strategies|risk|engine|backtest|data|anomaly)\.", r"\1src.\2."),
+    (r"(^\s*import\s+)algo3\.(core|features|strategies|risk|engine|backtest|data|anomaly)\.", r"\1src.\2."),
+    # 5) importlib.import_module("src.algo2.core.backtest.walkforward") → src.core...
+    (r"(import_module\([\'\"])src\.algo2\.", r"\1src."),
+    (r"(import_module\([\'\"])src\.algo3\.", r"\1src."),
+    (r"(import_module\([\'\"])algo2\.", r"\1src."),
+    (r"(import_module\([\'\"])algo3\.", r"\1src."),
+]
+
+def should_skip(path: str) -> bool:
+    parts = set(path.replace("\\","/").split("/"))
+    return bool(parts & EXCLUDE_DIRS)
+
+def process_file(path: str) -> int:
+    with open(path, "r", encoding="utf-8") as f:
+        src = f.read()
+
+    new = src
+    for pat, rep in RULES:
+        new = re.sub(pat, rep, new, flags=re.MULTILINE)
+
+    if new != src:
+        bak = path + ".bak"
+        with open(bak, "w", encoding="utf-8") as f:
+            f.write(src)
+        with open(path, "w", encoding="utf-8") as f:
+            f.write(new)
+        return 1
+    return 0
+
+def main():
+    changed = 0
+    for root, dirs, files in os.walk(ROOT):
+        if should_skip(root):
+            continue
+        for fn in files:
+            if fn.endswith(".py"):
+                changed += process_file(os.path.join(root, fn))
+    print(f"[cleanup] updated files: {changed}")
+
+if __name__ == "__main__":
+    main()

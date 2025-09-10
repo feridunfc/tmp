@@ -1,0 +1,9 @@
+strategies:
+  sma_crossover:
+    parameters:
+      fast: 14
+      slow: 50
+  mean_revert:
+    parameters:
+      lookback: 20
+      z_threshold: 1.5

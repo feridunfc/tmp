@@ -1,0 +1,7 @@
+global:
+  scrape_interval: 5s
+
+scrape_configs:
+  - job_name: 'algo2'
+    static_configs:
+      - targets: ['algo2:8000']
