@@ -1,0 +1,7 @@
+from algo2.core.strategies.registry import get_strategy
+from algo2.core.strategies.field_spec import FieldSpec
+
+def test_schema_is_fieldspec_list():
+    s = get_strategy("sma_crossover")
+    schema = s.param_schema()
+    assert isinstance(schema, list) and all(isinstance(x, FieldSpec) for x in schema)

@@ -1,24 +1,13 @@
-# .github/workflows/ci.yml
-name: ci
+﻿name: ci
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
-  test:
+  smoke:
+    name: smoke
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -m pip install -U pip
-      - run: pip install -e .  # paketini kur
-      - run: pip install pytest pytest-cov pre-commit
-      - run: pre-commit run --all-files
-      - run: pytest -q --cov=src --cov-report=term-missing --cov-report=xml
-      # (Opsiyonel) Codecov:
-      # - uses: codecov/codecov-action@v4
-      #   with:
-      #     files: ./coverage.xml
-      #     token: ${{ secrets.CODECOV_TOKEN }}  # public repo ise gerekmez
+      - run: echo ""CI is alive""

@@ -1,0 +1,43 @@
+
+import streamlit as st
+import pandas as pd
+from src.strategies.registry import get_registry
+from src.backtest.simple import run_backtest_from_signals
+from src.persist.db import save_run
+
+def run(state):
+    st.header("📊 Benchmark & Compare (Run)", anchor=False)
+    if "data" not in state:
+        st.warning("Önce Data.")
+        return
+    df = state["data"]
+    REG, ORDER = get_registry()
+    names = [k for k, _ in ORDER]
+    sel = st.multiselect("Stratejiler", names, default=names[:5], key="bench_sel")
+    results = []
+    for name in sel:
+        sch = REG[name]["schema"]
+        with st.expander(f"{name} param", expanded=False):
+            params = {}
+            for p, s in sch.items():
+                if s.get("type") == "int":
+                    params[p] = st.number_input(f"{name}.{p}", s.get("min",0), s.get("max",1000), s.get("default",0), s.get("step",1), key=f"bench_{name}_{p}")
+                elif s.get("type") == "float":
+                    params[p] = st.number_input(f"{name}.{p}", value=float(s.get("default",0.0)), key=f"bench_{name}_{p}")
+                else:
+                    params[p] = st.text_input(f"{name}.{p}", value=str(s.get("default","")), key=f"bench_{name}_{p}")
+        if st.button(f"Run {name}", key=f"bench_run_{name}"):
+            eq, pos, met, trades = run_backtest_from_signals(
+                df, REG[name]["gen"](df, params),
+                commission=float(state.get("commission_bps",5.0))/10000.0,
+                slippage=float(state.get("slippage_bps",10.0))/10000.0,
+                capital=float(state.get("capital",100000.0)))
+            results.append({"name": name, **met})
+            st.line_chart(eq.rename(name), key=f"bench_eq_{name}")
+            st.dataframe(trades.tail(20), width='stretch', height=200, key=f"bench_trades_{name}")
+            run_id = save_run("bench", name, str(df.get("Symbol", ["?"])[-1]) if "Symbol" in df.columns else "NA", params, met)
+            st.caption(f"Saved run_id {run_id}")
+    if results:
+        st.subheader("KPI Compare")
+        tbl = pd.DataFrame(results).set_index("name")
+        st.dataframe(tbl, width='stretch', key="bench_kpi_tbl")

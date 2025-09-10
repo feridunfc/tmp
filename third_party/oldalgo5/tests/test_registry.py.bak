@@ -1,0 +1,5 @@
+
+from algo2.strategies.registry import get_registry
+def test_registry_non_empty():
+    REG, ORDER = get_registry()
+    assert isinstance(REG, dict)

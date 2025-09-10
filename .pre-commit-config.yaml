@@ -4,18 +4,22 @@ repos:
     hooks:
       - id: check-merge-conflict
       - id: end-of-file-fixer
+        exclude: '(^|/)third_party/'
       - id: trailing-whitespace
+        exclude: '(^|/)third_party/'
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.12
     hooks:
       - id: ruff
         args: ["--fix"]
+        exclude: '(^|/)third_party/'
 
   - repo: https://github.com/psf/black
     rev: 25.1.0
     hooks:
       - id: black
+        exclude: '(^|/)third_party/'
 
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.17.1
@@ -26,12 +30,24 @@ repos:
           - pandas-stubs
           - types-PyYAML
           - types-python-dateutil
+        exclude: '(^|/)third_party/'
 
   - repo: local
     hooks:
       - id: pytest-wrapper
         name: Run pytest with coverage (pre-push)
         language: system
-        entry: python precommit_pytest.py
+        entry: python -m pytest
         pass_filenames: false
         stages: [pre-push]
+        args:
+          - -q
+          - -c
+          - pytest.ini
+          - --rootdir=.
+          - --ignore=third_party
+          - --maxfail=1
+          - --disable-warnings
+          - --cov=src
+          - --cov-branch
+          - --cov-report=xml:coverage.xml
