@@ -28,12 +28,13 @@ repos:
           - types-python-dateutil
 
 
+  # .pre-commit-config.yaml (yalnız ilgili bölüm)
   - repo: local
     hooks:
       - id: pytest-pre-push
         name: Run pytest with coverage (pre-push)
         language: system
-        entry: python precommit_pytest.py
+        entry: python -m pytest
+        args: ["-q"]           # coverage argümanlarını BURAYA yazmıyoruz
         pass_filenames: false
         stages: [pre-push]
-        always_run: true
